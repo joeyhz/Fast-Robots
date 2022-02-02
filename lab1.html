@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Fast Robots Wiki</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="robot-car-icon.jpg">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+</head>
+
+<body>
+    <section class="page-header">
+        <h1 class="project-name">Fast Robots</h1>
+        <h2 class="project-tagline">Joseph Horwitz's Wiki for ECE 4960 Fast Robots Course</h2>
+        <a target="_blank" href="https://github.com/joeyhz/Fast-Robots" class="btn">View on GitHub</a>
+    </section>
+
+
+    <section class="main-content">
+        <h2>Lab 1 - Artemis:</h2>
+        <h3>Step 1:</h3>
+        <p>I already had the Arduino IDE installed from previous projects including ECE 3400.</p>
+
+        <h3>Step 2:</h3>
+        <p>I followed the instructions and set up the Artemis Board without any issues.</p>
+
+        <h3>Step 3:</h3>
+        <p>The “Example: Blink it Up” sketch successfully uploaded and yielded the following result:</p>
+        <video width="320" height="240" controls>
+            <source src="lab content/lab 1 content/blink.MOV">
+          Your browser does not support the video tag.
+          </video>
+        <h3>Step 4:</h3>
+
+        <p>At first the Serial example sketch uploaded but printed gibberish, so I changed the baud rate of the Serial Monitor to match that of the Serial.begin statement. After that the sketch successfully uploaded and yielded the following sensible Serial
+            output:
+        </p>
+        <video width="320" height="240" controls>
+              <source src="lab content/lab 1 content/Serial example.mp4">
+            Your browser does not support the video tag.
+        </video>
+
+        <h3>Step 5:</h3>
+        <p>The analog read example sketch immediately ran and outputted correctly, but I had trouble getting the temp output to change significantly by blowing on it. I eventually was able to get meaningful results by taking the Artemis outside into 30 degree
+            weather and then returning to my heated apartment. That yielded the following Serial output:</p>
+        <video width="320" height="240" controls>
+              <source src="lab content/lab 1 content/AnalogRead example.mp4">
+            Your browser does not support the video tag.
+        </video>
+
+        <h3>Step 6:</h3>
+        <p>The microphone output example uploaded successfully and outputted meaningful, interesting results on the first try. The following is the Serial output from me whistling into the Artemis while it was running this sketch:</p>
+        <video width="320" height="240" controls>
+            <source src="lab content/lab 1 content/Microphone Example_trim.mp4">
+          Your browser does not support the video tag.
+      </video>
+    </section>
+
+
+</body>
+
+</html>
