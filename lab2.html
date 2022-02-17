@@ -1,6 +1,62 @@
-<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">        <span style="color: #888888">/*</span>
-<span style="color: #888888">         * Extract three floats from the command string</span>
-<span style="color: #888888">         */</span>
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Fast Robots Wiki</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="robot-car-icon.jpg">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+</head>
+
+<body>
+    <section class="page-header">
+        <h1 class="project-name">Fast Robots</h1>
+        <h2 class="project-tagline">Joseph Horwitz's Wiki for ECE 4960 Fast Robots Course</h2>
+        <a target="_blank" href="https://github.com/joeyhz/Fast-Robots" class="btn">View on GitHub</a>
+    </section>
+
+
+    <section class="main-content">
+        <h2>Lab 2 - Bluetooth:</h2>
+        <h3>Setup:</h3>
+        <p>My setup ran smoothly, but ended up becoming moot. Due to an unexpected issue with Windows 11, I was unable to connect to the Artemis from my personal computer using Bluetooth. I instead used a lab computer to complete this lab, and plan to install
+            a VM for future lab work. The lab computer was already fully set up with Arduino, Python, and Jupyter labs.</p>
+
+        <h3>Tasks:</h3>
+        <b>Below are screenshots of my Jupyter code/output and the Arduino Serial output. I also include my relevant Arduino code at the bottom.</b>
+
+        <h4>Task 1:</h4>
+        <p>In my Arduino ECHO handler I prepend the string "Artemis says -> \"" and append "\"" to the string received from the Bluetooth command string. This string is returned and read on Jupyter.</p>
+
+        <h4>Task 2:</h4>
+        <p>My Arduino SEND_THREE_FLOATS handler gets all three float values from the command string and prints them comma separated to the Serial monitor.</p>
+
+
+        <h4>Task 3:</h4>
+        <p>My Jupyter notification handler stores continuously updated floats in the variable received_float and prints them using the callback function float_receiver.</p>
+
+        <h4>Task 4:</h4>
+        <p>The Arduino structs are sent over Bluetooth as a GATT characteristic, which is interpreted by Python as a bytearray. In the first case, the byte array represents a float and is directly unpacked that way by the receive_float() function. In the
+            second case, the bytearray represents is an array of chars that corresponds to the float, and that char array is unpacked and later converted. </p>
+
+        <h4>Serial Output</h4>
+        <img src="lab content/lab 2 content/serial port.png" alt="Serial Port">
+        <h4>Jupyter Code/Output</h4>
+        <img src="lab content/lab 2 content/jupyter.png" alt="Jupyter">
+        <h4>Arduino Code</h4>
+
+
+
+
+
+        <!-- HTML generated using hilite.me -->
+        <div style="background: #ffffff; overflow:auto;width:auto;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">        <span style="color: #888888">/*</span>
+        <span style="color: #888888">         * Extract three floats from the command string</span>
+        <span style="color: #888888">         */</span>
         <span style="color: #008800; font-weight: bold">case</span> SEND_THREE_FLOATS:
 
             <span style="color: #333399; font-weight: bold">float</span> float_1, float_2, float_3;
@@ -26,8 +82,8 @@
 
             <span style="color: #008800; font-weight: bold">break</span>;
         <span style="color: #888888">/*</span>
-<span style="color: #888888">         * Add a prefix and postfix to the string value extracted from the command string</span>
-<span style="color: #888888">         */</span>
+        <span style="color: #888888">         * Add a prefix and postfix to the string value extracted from the command string</span>
+        <span style="color: #888888">         */</span>
         <span style="color: #008800; font-weight: bold">case</span> ECHO:
 
             <span style="color: #333399; font-weight: bold">char</span> char_arr[MAX_MSG_SIZE];
@@ -45,4 +101,9 @@
 
             tx_characteristic_string.writeValue(tx_estring_value.c_str());
             <span style="color: #008800; font-weight: bold">break</span>;
-</pre></div>
+    </pre></div>
+    </section>
+
+</body>
+
+</html>
