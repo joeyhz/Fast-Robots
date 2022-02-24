@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Fast Robots Wiki</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="robot-car-icon.jpg">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+</head>
+
+<body>
+    <section class="page-header">
+        <h1 class="project-name">Fast Robots</h1>
+        <h2 class="project-tagline">Joseph Horwitz's Wiki for ECE 4960 Fast Robots Course</h2>
+        <a target="_blank" href="https://github.com/joeyhz/Fast-Robots" class="btn">View on GitHub</a>
+    </section>
+    <section class="main-content">
+        <h3><b>Data:</b></h3>
+        <h4>Car dimensions: </h4>
+        <ul>
+            <li>Length: 7in</li>
+            <li>Width: 5.5in</li>
+            <li>Wheel Height: 3in</li>
+            <li>Body Height: 2.5in</li>
+        </ul>
+
+        <h4>Battery Life:</h4>
+        <p>17 minutes 35 seconds while use.</p>
+
+        <h4>Time to Charge:</h4>
+        <p>1 hour 15 minutes from no charge to fully powered.</p>
+
+        <h4>Range of Speeds:</h4>
+        <p>Our main challenge for the range of speeds was to find the maximum speed of the car, because the minimum speed is trivially zero. To accomplish this we laid out tape with foot and inch markings on the ground, put a timer with 1/100 second precision
+            next to it, and videotaped the car running full speed over the tape. Then we went frame by frame and collected two points including distance and time. We did this with two trials and got the following results:</p>
+        <b>Trial 1:</b>
+        <ul>
+            <li>Time Stamp 3ft from end of tape: 1min 52.92s</li>
+            <li>Time Stamp at end of tape: 1min 33.15s</li>
+        </ul>
+        <p>This translates to a speed of 13.04 ft/s or 3.975 m/s</p>
+        <p>Video of trial 1 (real time):</p>
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/dw1kAoVsqJw"></iframe>
+
+        <b>Trial 2:</b>
+        <ul>
+            <li>Time Stamp 2ft from end of tape: 4min 43.14s</li>
+            <li>Time Stamp at end of tape: 4min 43.31s</li>
+        </ul>
+        <p>This translates to a speed of 11.76 ft/s or 3.584 m/s</p>
+        <p>Video of trial 2 (slow motion):</p>
+
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/abJXxQwivLA"></iframe>
+
+        <h4>Other Observations:</h4>
+        <ul>
+            <li>Harder to flip on carpet than tile.</li>
+            <li>Turned at high speeds with little drift.</li>
+            <li>The controller was crude and made stunts difficult but the robot seemed very eager to rear up and flip on carpet.</li>
+        </ul>
+        <h4>Stunt videos:</h4>
+        <p>Spinning on carpet:</p>
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/dNrmqBhSalw"></iframe>
+        <p>Spinning on tile:</p>
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/OIWeHOI7aQw"></iframe>
+        <p>Flipping:</p>
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/-lkeo9Ngqcc"></iframe>
+
+        <h3>Rationals:</h3>
+        <p>We measured the car because we thought that data would be important for planning and localization, especially because the ToF sensors are likely to be on the edges of the car's chassis. We timed the battery life and charge duration for our own
+            convenience in planning work schedules and tests for later labs. We measured the range of speeds so that we could plan fast robotic maneuvers without surpassing our robot's capabilities. Finally, we tried various maneuvers and flips to get
+            an understanding of what stunts we could use in later labs and how to execute them.</p>
+        <br>
+        <i>Worked with Jacob Lashin (jwl266)</i>
+
+    </section>
+
+</body>
+
+</html>

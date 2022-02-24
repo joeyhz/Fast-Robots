@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Fast Robots Wiki</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="robot-car-icon.jpg">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+</head>
+
+<body>
+    <section class="page-header">
+        <h1 class="project-name">Fast Robots</h1>
+        <h2 class="project-tagline">Joseph Horwitz's Wiki for ECE 4960 Fast Robots Course</h2>
+        <a target="_blank" href="https://github.com/joeyhz/Fast-Robots" class="btn">View on GitHub</a>
+    </section>
+
+
+    <section class="main-content">
+        <h2>Lab 3 - Sensors:</h2>
+        <h3>Wiring:</h3>
+        <p>Wiring was a challenge because of limited access to good soldering equipment. Eventually I got the below wiring setup.</p>
+        <img>
+
+        <h3>Time of Flight Sensors:</h3>
+        <h4>ToF Sensor Address:</h4>
+        <p>I was unable to run the Wire example because I had already wired up both ToF sensors and the IMU, but my understanding from the documentation is that I will get an address of 0x29 because the sensor address of 0x52 gets right shifted by one bit.</p>
+        <h4>ToF Mode Performance:</h4>
+        <p>Short distance mode is resistant to ambient factors while long distance mode can sense objects from a further distance. Medium distance mode splits the difference in both aspects. For our purpose long is likely the best option because we need
+            to view far objects for quick localization.
+            <br> The sensor is accurate for sensing dark surfaces at short distances but underestimates distances for light surfaces and overestimates distances for far objects. Below are Serial Plotter outputs of distance in millimeters for conditions
+            that illustrate these trends.
+        </p>
+        <h5>Sensing 34mm away dark surface:</h5>
+        <img width="300" src="lab 3 content/tof short dark.png">
+        <h5>Sensing 34mm away light surface:</h5>
+        <img width="300" src="lab 3 content/tof short light.png">
+        <h5>Sensing 130mm away dark surface:</h5>
+        <img width="300" src="lab 3 content/tof long.png">
+
+        <h4>Multiple Sensors:</h4>
+        <p>At this point I added both my IMU and second ToF sensor. I wired the XSHUT pin on my first ToF sensor to pin 8 on my Artemis so that I can shut it off while establishing a separate address for my second sensor. </p>
+    </section>
+
+</body>
+
+</html>
