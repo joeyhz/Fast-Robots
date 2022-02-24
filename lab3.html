@@ -24,8 +24,7 @@
         <h2>Lab 3 - Sensors:</h2>
         <h3>Wiring:</h3>
         <p>Wiring was a challenge because of limited access to good soldering equipment. Eventually I got the below wiring setup.</p>
-        <img>
-
+        <img width="500" src="lab content/lab 3 content/wiring.jpg">
         <h3>Time of Flight Sensors:</h3>
         <h4>ToF Sensor Address:</h4>
         <p>I was unable to run the Wire example because I had already wired up both ToF sensors and the IMU, but my understanding from the documentation is that I will get an address of 0x29 because the sensor address of 0x52 gets right shifted by one bit.</p>
@@ -36,15 +35,359 @@
             that illustrate these trends.
         </p>
         <h5>Sensing 34mm away dark surface:</h5>
-        <img width="300" src="lab 3 content/tof short dark.png">
+        <img width="500" src="lab content/lab 3 content/tof short dark.png">
         <h5>Sensing 34mm away light surface:</h5>
-        <img width="300" src="lab 3 content/tof short light.png">
+        <img width="500" src="lab content/lab 3 content/tof short light.png">
         <h5>Sensing 130mm away dark surface:</h5>
-        <img width="300" src="lab 3 content/tof long.png">
+        <img width="500" src="lab content/lab 3 content/tof long.png">
 
         <h4>Multiple Sensors:</h4>
-        <p>At this point I added both my IMU and second ToF sensor. I wired the XSHUT pin on my first ToF sensor to pin 8 on my Artemis so that I can shut it off while establishing a separate address for my second sensor. </p>
+        <p>At this point I added both my IMU and second ToF sensor. I wired the XSHUT pin on my first ToF sensor to pin 8 on my Artemis so that I can shut it off while establishing a separate address for my second sensor. I then altered the ReadDistance
+            example code to include two sensors, turning off one sensor to change the address of the other. My implementation is below, and it produced the following Serial output.</p>
+        <img width="500" src="lab content/lab 3 content/two tofs.png">
+        <p>Multiple sensor code:</p>
+        <!-- HTML generated using hilite.me -->
+        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #333399; font-weight: bold">void</span> <span style="color: #0066BB; font-weight: bold">setup</span>(<span style="color: #333399; font-weight: bold">void</span>)
+{
+    Serial.begin(<span style="color: #0000DD; font-weight: bold">115200</span>);
+    Serial.println(<span style="background-color: #fff0f0">&quot;start&quot;</span>);
+  
+  
+    Wire.begin();
+  
+    Serial.println(<span style="background-color: #fff0f0">&quot;VL53L1X Qwiic Test&quot;</span>);
+  
+    <span style="color: #008800; font-weight: bold">if</span> (distanceSensor2.begin() <span style="color: #333333">!=</span> <span style="color: #0000DD; font-weight: bold">0</span>) <span style="color: #888888">//Begin returns 0 on a good init</span>
+    {
+      Serial.println(<span style="background-color: #fff0f0">&quot;Sensor 2 failed to begin. Please check wiring. Freezing...&quot;</span>);
+      <span style="color: #008800; font-weight: bold">while</span> (<span style="color: #0000DD; font-weight: bold">1</span>)
+        ;
+    }
+    Serial.println(<span style="background-color: #fff0f0">&quot;Sensor 2 online!&quot;</span>);
+  
+    digitalWrite(SHUTDOWN_PIN, LOW); <span style="color: #888888">// Shut off ToF 1</span>
+    distanceSensor2.setI2CAddress(<span style="color: #005588; font-weight: bold">0x22</span>);
+    digitalWrite(SHUTDOWN_PIN, HIGH); <span style="color: #888888">// Shut off ToF 1</span>
+  
+    Serial.println(<span style="background-color: #fff0f0">&quot;changed address&quot;</span>);
+  
+    <span style="color: #008800; font-weight: bold">if</span> (distanceSensor1.begin() <span style="color: #333333">!=</span> <span style="color: #0000DD; font-weight: bold">0</span>) <span style="color: #888888">//Begin returns 0 on a good init</span>
+    {
+      Serial.println(<span style="background-color: #fff0f0">&quot;Sensor 1 failed to begin. Please check wiring. Freezing...&quot;</span>);
+      <span style="color: #008800; font-weight: bold">while</span> (<span style="color: #0000DD; font-weight: bold">1</span>)
+        ;
+    }
+    Serial.println(<span style="background-color: #fff0f0">&quot;Sensor 1 online!&quot;</span>);
+  }
+  
+  <span style="color: #333399; font-weight: bold">void</span> <span style="color: #0066BB; font-weight: bold">loop</span>(<span style="color: #333399; font-weight: bold">void</span>)
+  {
+    distanceSensor1.startRanging(); <span style="color: #888888">//Write configuration bytes to initiate measurement</span>
+    distanceSensor2.startRanging();
+    Serial.println(<span style="background-color: #fff0f0">&quot;ranging&quot;</span>);
+    <span style="color: #008800; font-weight: bold">while</span> ( <span style="color: #333333">!</span>(distanceSensor1.checkForDataReady() <span style="color: #333333">&amp;&amp;</span> distanceSensor2.checkForDataReady()) )
+    {
+      delay(<span style="color: #0000DD; font-weight: bold">1</span>);
+    }
+    <span style="color: #333399; font-weight: bold">int</span> distance1 <span style="color: #333333">=</span> distanceSensor1.getDistance(); <span style="color: #888888">//Get the result of the measurement from sensor 1</span>
+    <span style="color: #333399; font-weight: bold">int</span> distance2 <span style="color: #333333">=</span> distanceSensor2.getDistance(); <span style="color: #888888">//Get the result of the measurement from sensor 1</span>
+  
+    distanceSensor1.clearInterrupt();
+    distanceSensor1.stopRanging();
+  
+    distanceSensor2.clearInterrupt();
+    distanceSensor2.stopRanging();
+  
+    Serial.print(<span style="background-color: #fff0f0">&quot;Distance 1(mm): &quot;</span>);
+    Serial.print(distance1);
+    Serial.println();
+    Serial.print(<span style="background-color: #fff0f0">&quot;Distance 2(mm): &quot;</span>);
+    Serial.print(distance2);
+  
+  
+    Serial.println();
+  }
+  </pre></div>
+        <h3>IMU Setup</h3>
+        <h4>ADC0_VAL:</h4>
+        <p>The ADC0_VAL represents the operation mode of the microprocessor in relation to the IMU. In this case, we only want to use I2C to read from the IMU and do not need to write values to the IMU or use SPI. Therefore the ADC0_VAL should be 0</p>
+        <h4>Accelerometer values:</h4>
+        <p>The accelerometer values are about zero for directions perpendicular to gravity and about 1000 for directions parallel to gravity due to gravitational force. The units are milli-g. The below Serial Logger plot shows the three axes of the accelerometer
+            as I rotate the IMU over three mutually perpendicular orientations, each with one axis parallel to gravity. </p>
+        <img width="500" src="lab content/lab 3 content/imu accel.png">
+        <h4>Gyroscope Values:</h4>
+        <p>The gyroscope values represent change in orientation along each axis. The below plot represents the same pattern of motion as with the accelerometer. The gyroscope measurements are in blue, green, and orange. They are all approximately zero except
+            while the IMU is moving.</p>
+        <img width="500" src="lab content/lab 3 content/imu gyro.png">
+
+        <h3>Accelerometer:</h3>
+        <p>Outcome of 90deg -> 0deg -> -90deg pitch:</p>
+        <img width="500" src="lab content/lab 3 content/pitch.png">
+        <p>Outcome of 90deg -> 0deg -> -90deg roll:</p>
+        <img width="500" src="lab content/lab 3 content/roll.png">
+        <p>The accelerometer is accurate to within about 3 degrees.</p>
+
+        <h4>Frequency:</h4>
+        <p>
+            I performed an FFT with Python to get the frequency response created by tapping the IMU. The below are my outputs.</p>
+        <p>Time domain:</p>
+        <img width="500" src="lab content/lab 3 content/time domain.png">
+        <p>Frequency domain:</p>
+        <img width="500" src="lab content/lab 3 content/frequency.png">
+        <p>Based on this data, a low pass filter does not appear to be very necessary. If one were put in place, it would be most helpful for blocking small spikes in the 100-200Hz range, so a cut off frequency of 100Hz could be used. This limits high frequency
+            noise that is not indicative of significant, effectual events. Instead only the general, important trends are measured.</p>
+        <h3>Gyroscope:</h3>
+        <p>Measurements of pitch roll and yaw from gyroscope.</p>
+        <img width="500" src="lab content/lab 3 content/all_gyro.png">
+        <p>The measurements are similar to those from the accelerometer, except the gyroscope values tend to drift due to noise integration. Below is a plot demonstrating that drift.</p>
+        <img width="500" src="lab content/lab 3 content/drift.png">
+        <p> When increasing the sampling frequency the drift increases because the noise is being integrated faster.</p>
+        <h4>Complimentary filter:</h4>
+        <p>A complimentary filter with alpha of 0.5 yielded an accurate, if slightly noisy plot with no drift. See below plot of pitch roll and yaw while rotating.</p>
+        <img width="500" src="lab content/lab 3 content/all_comp.png">
+        <p>Below is the final iteration of my code, including the complimentary filter and vestiges of old functionality.</p>
+        <!-- HTML generated using hilite.me -->
+        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #333399; font-weight: bold">unsigned</span> <span style="color: #333399; font-weight: bold">long</span> startMillis <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+<span style="color: #333399; font-weight: bold">int</span> count <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+<span style="color: #333399; font-weight: bold">float</span> pitch_g <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+<span style="color: #333399; font-weight: bold">float</span> roll_g <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+<span style="color: #333399; font-weight: bold">float</span> yaw_g <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+<span style="color: #333399; font-weight: bold">float</span> dt;
+<span style="color: #333399; font-weight: bold">unsigned</span> <span style="color: #333399; font-weight: bold">long</span> last_time;
+ 
+<span style="color: #557799">#define a .3</span>
+ 
+<span style="color: #333399; font-weight: bold">float</span> complimentary_roll;
+<span style="color: #333399; font-weight: bold">float</span> complimentary_pitch;
+ 
+<span style="color: #333399; font-weight: bold">void</span> <span style="color: #0066BB; font-weight: bold">setup</span>()
+{
+  SERIAL_PORT.begin(<span style="color: #0000DD; font-weight: bold">115200</span>);
+  <span style="color: #008800; font-weight: bold">while</span> (<span style="color: #333333">!</span>SERIAL_PORT)
+  {
+  };
+<span style="color: #557799">#ifdef USE_SPI</span>
+  SPI_PORT.begin();
+<span style="color: #557799">#else</span>
+  WIRE_PORT.begin();
+  WIRE_PORT.setClock(<span style="color: #0000DD; font-weight: bold">400000</span>);
+<span style="color: #557799">#endif</span>
+  <span style="color: #888888">//myICM.enableDebugging(); // Uncomment this line to enable helpful debug messages on Serial</span>
+  <span style="color: #333399; font-weight: bold">bool</span> initialized <span style="color: #333333">=</span> <span style="color: #007020">false</span>;
+  <span style="color: #008800; font-weight: bold">while</span> (<span style="color: #333333">!</span>initialized)
+  {
+<span style="color: #557799">#ifdef USE_SPI</span>
+    myICM.begin(CS_PIN, SPI_PORT);
+<span style="color: #557799">#else</span>
+    myICM.begin(WIRE_PORT, AD0_VAL);
+<span style="color: #557799">#endif</span>
+    SERIAL_PORT.print(F(<span style="background-color: #fff0f0">&quot;Initialization of the sensor returned: &quot;</span>));
+    SERIAL_PORT.println(myICM.statusString());
+    <span style="color: #008800; font-weight: bold">if</span> (myICM.status <span style="color: #333333">!=</span> ICM_20948_Stat_Ok)
+    {
+      SERIAL_PORT.println(<span style="background-color: #fff0f0">&quot;Trying again...&quot;</span>);
+      delay(<span style="color: #0000DD; font-weight: bold">500</span>);
+    }
+    <span style="color: #008800; font-weight: bold">else</span>
+    {
+      initialized <span style="color: #333333">=</span> <span style="color: #007020">true</span>;
+    }
+  }
+  startMillis <span style="color: #333333">=</span> millis();
+  last_time <span style="color: #333333">=</span> millis();
+  count <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+}
+<span style="color: #333399; font-weight: bold">void</span> <span style="color: #0066BB; font-weight: bold">loop</span>()
+{
+<span style="color: #888888">//  if (millis() - startMillis &gt; 10000){ //for FFT </span>
+<span style="color: #888888">//    Serial.println(&quot;\nCount:&quot;);</span>
+<span style="color: #888888">//    </span>
+<span style="color: #888888">//    Serial.println(count);</span>
+<span style="color: #888888">//    while(1);</span>
+<span style="color: #888888">//  }</span>
+  <span style="color: #008800; font-weight: bold">if</span> (myICM.dataReady())
+  {
+    myICM.getAGMT();         <span style="color: #888888">// The values are only updated when you call &#39;getAGMT&#39;</span>
+                             <span style="color: #888888">//    printRawAGMT( myICM.agmt );     // Uncomment this to see the raw values, taken directly from the agmt structure</span>
+    printScaledAGMT(<span style="color: #333333">&amp;</span>myICM); <span style="color: #888888">// This function takes into account the scale settings from when the measurement was made to calculate the values with units</span>
+    delay(<span style="color: #0000DD; font-weight: bold">30</span>);
+    count<span style="color: #333333">++</span>;
+  }
+  <span style="color: #008800; font-weight: bold">else</span>
+  {
+    SERIAL_PORT.println(<span style="background-color: #fff0f0">&quot;Waiting for data&quot;</span>);
+    delay(<span style="color: #0000DD; font-weight: bold">500</span>);
+  }
+}
+<span style="color: #888888">// Below here are some helper functions to print the data nicely!</span>
+<span style="color: #333399; font-weight: bold">void</span> <span style="color: #0066BB; font-weight: bold">printPaddedInt16b</span>(<span style="color: #333399; font-weight: bold">int16_t</span> val)
+{
+  <span style="color: #008800; font-weight: bold">if</span> (val <span style="color: #333333">&gt;</span> <span style="color: #0000DD; font-weight: bold">0</span>)
+  {
+    SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot; &quot;</span>);
+    <span style="color: #008800; font-weight: bold">if</span> (val <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">10000</span>)
+    {
+      SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot;0&quot;</span>);
+    }
+    <span style="color: #008800; font-weight: bold">if</span> (val <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">1000</span>)
+    {
+      SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot;0&quot;</span>);
+    }
+    <span style="color: #008800; font-weight: bold">if</span> (val <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">100</span>)
+    {
+      SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot;0&quot;</span>);
+    }
+    <span style="color: #008800; font-weight: bold">if</span> (val <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">10</span>)
+    {
+      SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot;0&quot;</span>);
+    }
+  }
+  <span style="color: #008800; font-weight: bold">else</span>
+  {
+    SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot;-&quot;</span>);
+    <span style="color: #008800; font-weight: bold">if</span> (abs(val) <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">10000</span>)
+    {
+      SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot;0&quot;</span>);
+    }
+    <span style="color: #008800; font-weight: bold">if</span> (abs(val) <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">1000</span>)
+    {
+      SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot;0&quot;</span>);
+    }
+    <span style="color: #008800; font-weight: bold">if</span> (abs(val) <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">100</span>)
+    {
+      SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot;0&quot;</span>);
+    }
+    <span style="color: #008800; font-weight: bold">if</span> (abs(val) <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">10</span>)
+    {
+      SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot;0&quot;</span>);
+    }
+  }
+  SERIAL_PORT.print(abs(val));
+}
+<span style="color: #333399; font-weight: bold">void</span> <span style="color: #0066BB; font-weight: bold">printRawAGMT</span>(ICM_20948_AGMT_t agmt)
+{
+  SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot;RAW. Acc [ &quot;</span>);
+  printPaddedInt16b(agmt.acc.axes.x);
+  SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot;, &quot;</span>);
+  printPaddedInt16b(agmt.acc.axes.y);
+  SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot;, &quot;</span>);
+  printPaddedInt16b(agmt.acc.axes.z);
+  SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot; ], Gyr [ &quot;</span>);
+  printPaddedInt16b(agmt.gyr.axes.x);
+  SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot;, &quot;</span>);
+  printPaddedInt16b(agmt.gyr.axes.y);
+  SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot;, &quot;</span>);
+  printPaddedInt16b(agmt.gyr.axes.z);
+  SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot; ], Mag [ &quot;</span>);
+  printPaddedInt16b(agmt.mag.axes.x);
+  SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot;, &quot;</span>);
+  printPaddedInt16b(agmt.mag.axes.y);
+  SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot;, &quot;</span>);
+  printPaddedInt16b(agmt.mag.axes.z);
+  SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot; ], Tmp [ &quot;</span>);
+  printPaddedInt16b(agmt.tmp.val);
+  SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot; ]&quot;</span>);
+  SERIAL_PORT.println();
+}
+<span style="color: #333399; font-weight: bold">void</span> <span style="color: #0066BB; font-weight: bold">printFormattedFloat</span>(<span style="color: #333399; font-weight: bold">float</span> val, <span style="color: #333399; font-weight: bold">uint8_t</span> leading, <span style="color: #333399; font-weight: bold">uint8_t</span> decimals)
+{
+  <span style="color: #333399; font-weight: bold">float</span> aval <span style="color: #333333">=</span> abs(val);
+  <span style="color: #008800; font-weight: bold">if</span> (val <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">0</span>)
+  {
+    SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot;-&quot;</span>);
+  }
+  <span style="color: #008800; font-weight: bold">else</span>
+  {
+    SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot; &quot;</span>);
+  }
+  <span style="color: #008800; font-weight: bold">for</span> (<span style="color: #333399; font-weight: bold">uint8_t</span> indi <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>; indi <span style="color: #333333">&lt;</span> leading; indi<span style="color: #333333">++</span>)
+  {
+    <span style="color: #333399; font-weight: bold">uint32_t</span> tenpow <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+    <span style="color: #008800; font-weight: bold">if</span> (indi <span style="color: #333333">&lt;</span> (leading <span style="color: #333333">-</span> <span style="color: #0000DD; font-weight: bold">1</span>))
+    {
+      tenpow <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">1</span>;
+    }
+    <span style="color: #008800; font-weight: bold">for</span> (<span style="color: #333399; font-weight: bold">uint8_t</span> c <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>; c <span style="color: #333333">&lt;</span> (leading <span style="color: #333333">-</span> <span style="color: #0000DD; font-weight: bold">1</span> <span style="color: #333333">-</span> indi); c<span style="color: #333333">++</span>)
+    {
+      tenpow <span style="color: #333333">*=</span> <span style="color: #0000DD; font-weight: bold">10</span>;
+    }
+    <span style="color: #008800; font-weight: bold">if</span> (aval <span style="color: #333333">&lt;</span> tenpow)
+    {
+      SERIAL_PORT.print(<span style="background-color: #fff0f0">&quot;0&quot;</span>);
+    }
+    <span style="color: #008800; font-weight: bold">else</span>
+    {
+      <span style="color: #008800; font-weight: bold">break</span>;
+    }
+  }
+  <span style="color: #008800; font-weight: bold">if</span> (val <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">0</span>)
+  {
+    SERIAL_PORT.print(<span style="color: #333333">-</span>val, decimals);
+  }
+  <span style="color: #008800; font-weight: bold">else</span>
+  {
+    SERIAL_PORT.print(val, decimals);
+  }
+}
+<span style="color: #557799">#ifdef USE_SPI</span>
+<span style="color: #333399; font-weight: bold">void</span> <span style="color: #0066BB; font-weight: bold">printScaledAGMT</span>(ICM_20948_SPI <span style="color: #333333">*</span>sensor)
+{
+<span style="color: #557799">#else</span>
+<span style="color: #333399; font-weight: bold">void</span> printScaledAGMT(ICM_20948_I2C <span style="color: #333333">*</span>sensor)
+{
+<span style="color: #557799">#endif</span>
+<span style="color: #333399; font-weight: bold">float</span> pitch_a <span style="color: #333333">=</span> atan2(sensor<span style="color: #333333">-&gt;</span>accX(), sensor<span style="color: #333333">-&gt;</span>accZ())<span style="color: #333333">*</span><span style="color: #0000DD; font-weight: bold">180</span><span style="color: #333333">/</span>M_PI;
+<span style="color: #333399; font-weight: bold">float</span> roll_a <span style="color: #333333">=</span> atan2(sensor<span style="color: #333333">-&gt;</span>accY(), sensor<span style="color: #333333">-&gt;</span>accZ())<span style="color: #333333">*</span><span style="color: #0000DD; font-weight: bold">180</span><span style="color: #333333">/</span>M_PI;
+<span style="color: #888888">//Serial.println(tilt_a);</span>
+<span style="color: #888888">//Serial.println(roll_a);</span>
+dt <span style="color: #333333">=</span> (millis() <span style="color: #333333">-</span> last_time) <span style="color: #333333">*</span> <span style="color: #6600EE; font-weight: bold">0.001</span>;
+pitch_g <span style="color: #333333">=</span> pitch_g <span style="color: #333333">-</span> (sensor<span style="color: #333333">-&gt;</span>gyrX())<span style="color: #333333">*</span>dt;
+roll_g <span style="color: #333333">=</span> roll_g <span style="color: #333333">-</span> (sensor<span style="color: #333333">-&gt;</span>gyrY())<span style="color: #333333">*</span>dt;
+yaw_g <span style="color: #333333">=</span> yaw_g <span style="color: #333333">-</span> (sensor<span style="color: #333333">-&gt;</span>gyrZ())<span style="color: #333333">*</span>dt;
+ 
+complimentary_roll <span style="color: #333333">=</span> (complimentary_roll <span style="color: #333333">+</span> roll_g<span style="color: #333333">*</span>dt)<span style="color: #333333">*</span>(<span style="color: #0000DD; font-weight: bold">1</span><span style="color: #333333">-</span>a) <span style="color: #333333">+</span> roll_a<span style="color: #333333">*</span>a;
+complimentary_pitch <span style="color: #333333">=</span> (complimentary_pitch <span style="color: #333333">+</span> pitch_g<span style="color: #333333">*</span>dt)<span style="color: #333333">*</span>(<span style="color: #0000DD; font-weight: bold">1</span><span style="color: #333333">-</span>a) <span style="color: #333333">+</span> pitch_a<span style="color: #333333">*</span>a;
+ 
+Serial.print(<span style="background-color: #fff0f0">&quot;pitch:&quot;</span>);
+Serial.print(complimentary_pitch);
+Serial.print(<span style="background-color: #fff0f0">&quot;, &quot;</span>);
+Serial.print(<span style="background-color: #fff0f0">&quot;roll:&quot;</span>);
+Serial.print(complimentary_roll);
+<span style="color: #888888">//Serial.print(&quot;, &quot;);</span>
+<span style="color: #888888">//Serial.print(&quot;yaw:&quot;);</span>
+<span style="color: #888888">//Serial.print(yaw_g);</span>
+Serial.println();
+ 
+last_time <span style="color: #333333">=</span> millis();
+<span style="color: #888888">//  SERIAL_PORT.print(&quot;Scaled. Acc (mg) [ &quot;);</span>
+<span style="color: #888888">//  printFormattedFloat(sensor-&gt;accX(), 5, 2);</span>
+<span style="color: #888888">//  SERIAL_PORT.print(&quot;, &quot;);</span>
+<span style="color: #888888">//  printFormattedFloat(sensor-&gt;accY(), 5, 2);</span>
+<span style="color: #888888">//  SERIAL_PORT.print(&quot;, &quot;);</span>
+<span style="color: #888888">//  printFormattedFloat(sensor-&gt;accZ(), 5, 2);</span>
+<span style="color: #888888">//  SERIAL_PORT.print(&quot; ]&quot;);</span>
+<span style="color: #888888">//  printFormattedFloat(sensor-&gt;gyrX(), 5, 2);</span>
+<span style="color: #888888">//  SERIAL_PORT.print(&quot;, L&quot;);</span>
+<span style="color: #888888">//  printFormattedFloat(sensor-&gt;gyrY(), 5, 2);</span>
+<span style="color: #888888">//  SERIAL_PORT.print(&quot;, &quot;);</span>
+<span style="color: #888888">//  printFormattedFloat(sensor-&gt;gyrZ(), 5, 2);</span>
+<span style="color: #888888">//  SERIAL_PORT.print(&quot; ]&quot;);</span>
+<span style="color: #888888">//  printFormattedFloat(sensor-&gt;magX(), 5, 2);</span>
+<span style="color: #888888">//  SERIAL_PORT.print(&quot;, &quot;);</span>
+<span style="color: #888888">//  printFormattedFloat(sensor-&gt;magY(), 5, 2);</span>
+<span style="color: #888888">//  SERIAL_PORT.print(&quot;, &quot;);</span>
+<span style="color: #888888">//  printFormattedFloat(sensor-&gt;magZ(), 5, 2);</span>
+<span style="color: #888888">//  SERIAL_PORT.print(&quot; ], Tmp (C) [ &quot;);</span>
+<span style="color: #888888">//  printFormattedFloat(sensor-&gt;temp(), 5, 2);</span>
+<span style="color: #888888">//  SERIAL_PORT.print(&quot; ]&quot;);</span>
+<span style="color: #888888">//  SERIAL_PORT.println();</span>
+}
+</pre></div>
+
+
     </section>
+
+
 
 </body>
 
