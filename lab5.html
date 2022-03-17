@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Fast Robots Wiki</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="robot-car-icon.jpg">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+</head>
+
+<body>
+    <section class="page-header">
+        <h1 class="project-name">Fast Robots</h1>
+        <h2 class="project-tagline">Joseph Horwitz's Wiki for ECE 4960 Fast Robots Course</h2>
+        <a target="_blank" href="https://github.com/joeyhz/Fast-Robots" class="btn">View on GitHub</a>
+    </section>
+    <section class="main-content">
+        <h2>Motor Drivers and Open Loop Control:</h2>
+
+        <h3>PWM on one motor driver:</h3>
+        <p>First I wired my motor driver to the power supply, using 3.3 Volts and a current cap of 10 Amps. This simulates the battery that will be used in the actual robot.
+        </p>
+        <p>
+            I then sent a PWM signal with 50% duty cycle to the motor driver input and measured the output with an oscilloscope. I received the below signal, which is a square wave with some capacitance. This indicates that the motor diver was working.
+        </p>
+        <img width="500" src="lab content/lab 5 content/oscilloscope.jpg">
+
+        <h3>Wiring up motors:</h3>
+        <p>
+            I had a lot of trouble wiring the motor drivers. I got one running, but then when I added the other one neither worked. Then I replaced both motor drivers and eventually got the car to run. Below is a picture of my motor driver wiring.
+        </p>
+        <img width="500" src="lab content/lab 5 content/drivers.jpg">
+        <p>
+            I secured all components inside the car chassis using double sided tape, and stored the batteries in the battery compartment. I drilled holes through the battery compartment to connect the batteries to my motors and microcontroller. Below is a photo of
+            my final wiring setup.
+        </p>
+        <img width="500" src="lab content/lab 5 content/wiring.jpg">
+        <h3>Open Loop Control:</h3>
+        <p>Below is a video of my calibrated car moving in a somewhat straight line. Given that the exact directionality of the car depends on the surface and transient physical factors, I decided that keeping it straighter than this would have to fall to
+            control systems.</p>
+        <video width="320" height="240" controls>
+            <source src="lab content/lab 5 content/straight.mp4">
+          Your browser does not support the video tag.
+      </video>
+        <p>Below is a video of the car making a right turn after driving down the hallway at high speed.</p>
+        <video width="320" height="240" controls>
+            <source src="lab content/lab 5 content/spin.mp4">
+
+
+      Your browser does not support the video tag.
+    </video>
+        <p>Finally, I tested the ability to turn in place with the following video</p>
+        <video width="320" height="240" controls>
+            <source src="lab content/lab 5 content/turn.mp4">
+  Your browser does not support the video tag.
+</video>
+
+
+    </section>
+
+</body>
+
+</html>
