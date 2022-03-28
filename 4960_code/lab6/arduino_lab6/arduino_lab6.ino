@@ -2,6 +2,11 @@
 #include "BLECStringCharacteristic.h"
 #include "EString.h"
 #include "RobotCommand.h"
+#include "SensorFuncs.h"
+#include "MotorFuncs.h"
+#include "PIDFuncs.h"
+
+
 #include <ArduinoBLE.h>
 
 //////////// BLE UUIDs ////////////
@@ -28,19 +33,30 @@ RobotCommand robot_cmd(":|");
 EString tx_estring_value;
 float tx_float_value = 0.0;
 
-long interval = 500;
-static long previousMillis = 0;
-unsigned long currentMillis = 0;
+
+bool do_PID = false;
+int measure_count = 0;
+unsigned long startMillis = 0;
+
+#define ARR_SIZE 200
+int front_tof_readings[ARR_SIZE];
+long times[ARR_SIZE];
+float motor_pcnts[ARR_SIZE];
+
+int TARGET_DIST = 300;
+
+#define KP 1.0
+#define KI 0.0
+#define KD 0.0
+
+int integrator = 0;
 //////////// Global Variables ////////////
 
 enum CommandTypes
 {
-    PING,
-    SEND_TWO_INTS,
-    SEND_THREE_FLOATS,
-    ECHO,
-    DANCE,
-    SET_VEL,
+    WALL_PID,
+    STOP,
+    MOVE_FORWARD,
 };
 
 void
@@ -67,30 +83,25 @@ handle_command()
 
     // Handle the command type accordingly
     switch (cmd_type) {
-        
-        /*
-         * SET_VEL
-         */
-        case SET_VEL:
-
-            break;
-        
-        /* 
-         * The default case may not capture all types of invalid commands.
-         * It is safer to validate the command string on the central device (in python)
-         * before writing to the characteristic.
-         */
+        case WALL_PID:
+          do_PID = true;
+          break;
+        case STOP:
+          break;
+        case MOVE_FORWARD:
+          break;
         default:
-            Serial.print("Invalid Command Type: ");
-            Serial.println(cmd_type);
-            break;
+          Serial.print("Invalid Command Type: ");
+          Serial.println(cmd_type);
+          break;
     }
 }
 
-void
-setup()
-{
+void setup(){
     Serial.begin(115200);
+
+    setup_sensors();
+    integrator = 0;
 
     BLE.begin();
 
@@ -107,28 +118,6 @@ setup()
     // Add BLE service
     BLE.addService(testService);
 
-    // Initial values for characteristics
-    // Set initial values to prevent errors when reading for the first time on central devices
-    tx_characteristic_float.writeValue(0.0);
-
-    /*
-     * An example using the EString
-     */
-    // Clear the contents of the EString before using it
-    tx_estring_value.clear();
-
-    // Append the string literal "[->"
-    tx_estring_value.append("[->");
-
-    // Append the float value
-    tx_estring_value.append(9.0);
-
-    // Append the string literal "<-]"
-    tx_estring_value.append("<-]");
-
-    // Write the value to the characteristic
-    tx_characteristic_string.writeValue(tx_estring_value.c_str());
-
     // Output MAC Address
     Serial.print("Advertising BLE with MAC: ");
     Serial.println(BLE.address());
@@ -136,23 +125,16 @@ setup()
     BLE.advertise();
 }
 
-void
-write_data()
-{
-    currentMillis = millis();
-    if (currentMillis - previousMillis > interval) {
+void write_data(){
+  for (int i=0; i<ARR_SIZE; i++)tx_characteristic_float.writeValue(front_tof_readings[i]*1.0);
+  for (int i=0; i<ARR_SIZE; i++)tx_characteristic_float.writeValue(times[i]*1.0);
+  for (int i=0; i<ARR_SIZE; i++)tx_characteristic_float.writeValue(motor_pcnts[i]);
+}
 
-        tx_float_value = tx_float_value + 0.5;
-        tx_characteristic_float.writeValue(tx_float_value);
-//        Serial.println(tx_float_value);
-
-        if (tx_float_value > 10000) {
-            tx_float_value = 0;
-            
-        }
-
-        previousMillis = currentMillis;
-    }
+void store_data(int index, long curr_mill, int new_tof, float pcnt){
+  front_tof_readings[index] = new_tof;
+  times[index] = curr_mill;
+  motor_pcnts[index] = pcnt;
 }
 
 void read_data()
@@ -163,7 +145,30 @@ void read_data()
     }
 }
 
+float pid(int index, long time_stamp, int tof_dist){
+  int error = tof_dist - TARGET_DIST;  
+   
+  float deriv;
+  if (index == 0){
+    deriv = 0;
+    integrator = 0;
+  }
+  else{
+    int dt = time_stamp - times[index-1];
+    deriv = (tof_dist - front_tof_readings[index-1]) / dt;
+    integrator = integrator + dt*error;
+  }
+  
+  return KP * error + KI * integrator + KD * deriv;
+}
+
+
+
+
 void loop(){
+    long curr_mil;
+    int new_tof;
+    float pcnt;
     // Listen for connections
     BLEDevice central = BLE.central();
 
@@ -174,13 +179,26 @@ void loop(){
 
         // While central is connected
         while (central.connected()) {
-            // Send data
-            write_data();
-
             // Read data
             read_data();
+
+            if (do_PID && sensor_data_ready() && measure_count < ARR_SIZE){
+              //Doing PID and just got new sensor reading
+              curr_mil = millis();
+              new_tof = get_front_tof();
+              pcnt = pid(measure_count, curr_mil, new_tof);
+              
+              move_speed(pcnt);
+              store_data(measure_count, curr_mil, new_tof, pcnt);
+              measure_count ++;
+              
+            }
+            else if (do_PID && measure_count >= ARR_SIZE){
+              write_data();
+            }
         }
 
         Serial.println("Disconnected");
+        active_stop();
     }
 }
