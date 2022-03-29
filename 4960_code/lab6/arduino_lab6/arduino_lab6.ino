@@ -4,7 +4,6 @@
 #include "RobotCommand.h"
 #include "SensorFuncs.h"
 #include "MotorFuncs.h"
-#include "PIDFuncs.h"
 
 
 #include <ArduinoBLE.h>
@@ -132,6 +131,15 @@ void write_data(){
 }
 
 void store_data(int index, long curr_mill, int new_tof, float pcnt){
+  Serial.println("Index: ");
+  Serial.print(index);
+  Serial.print(", Time (ms): ");
+  Serial.print(curr_mill);
+  Serial.print(", TOF dist (mm): ");
+  Serial.print(new_tof);
+  Serial.print(", Motor %: ");
+  Serial.print(pcnt);
+  
   front_tof_readings[index] = new_tof;
   times[index] = curr_mill;
   motor_pcnts[index] = pcnt;
@@ -158,8 +166,10 @@ float pid(int index, long time_stamp, int tof_dist){
     deriv = (tof_dist - front_tof_readings[index-1]) / dt;
     integrator = integrator + dt*error;
   }
-  
-  return KP * error + KI * integrator + KD * deriv;
+  float raw = KP * error + KI * integrator + KD * deriv;
+  if (raw > 100) return 100;
+  if (raw < -100) return -100;
+  return raw;
 }
 
 
@@ -194,6 +204,7 @@ void loop(){
               
             }
             else if (do_PID && measure_count >= ARR_SIZE){
+             active_stop();
               write_data();
             }
         }
