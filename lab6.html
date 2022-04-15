@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Fast Robots Wiki</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="robot-car-icon.jpg">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+</head>
+
+<body>
+    <section class="page-header">
+        <h1 class="project-name">Fast Robots</h1>
+        <h2 class="project-tagline">Joseph Horwitz's Wiki for ECE 4960 Fast Robots Course</h2>
+        <a target="_blank" href="https://github.com/joeyhz/Fast-Robots" class="btn">View on GitHub</a>
+    </section>
+    <section class="main-content">
+        <h2>PID Control:</h2>
+
+        <h3>Prelab/BLE:</h3>
+        <p>
+            In order to store and analyze the robot's PID control system, my first step was to establish a system for the Artemis to communicate with another computer. This was accomplished using BLE to send commands from a lab desktop computer to the Artemis and
+            to relay PID outputs and sensor readings back to the desktop. The reason I used a lab desktop computer instead of my laptop for this purpose is because of some Bluetooth compatibility issues with my Windows 11 laptop. My code for this communication
+            is as follows:
+        </p>
+        <h4>C++ code to send data:</h4>
+        <!-- HTML generated using hilite.me -->
+        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #333399; font-weight: bold">void</span> <span style="color: #0066BB; font-weight: bold">write_data</span>(){
+  Serial.println(<span style="background-color: #fff0f0">&quot;Write data&quot;</span>);
+  <span style="color: #008800; font-weight: bold">for</span> (<span style="color: #333399; font-weight: bold">int</span> i<span style="color: #333333">=</span><span style="color: #0000DD; font-weight: bold">0</span>; i<span style="color: #333333">&lt;</span>ARR_SIZE; i<span style="color: #333333">++</span>)tx_characteristic_float.writeValue(front_tof_readings[i]<span style="color: #333333">*</span><span style="color: #6600EE; font-weight: bold">1.0</span>);
+  <span style="color: #008800; font-weight: bold">for</span> (<span style="color: #333399; font-weight: bold">int</span> i<span style="color: #333333">=</span><span style="color: #0000DD; font-weight: bold">0</span>; i<span style="color: #333333">&lt;</span>ARR_SIZE; i<span style="color: #333333">++</span>)tx_characteristic_float.writeValue(times[i]<span style="color: #333333">*</span><span style="color: #6600EE; font-weight: bold">1.0</span>);
+  <span style="color: #008800; font-weight: bold">for</span> (<span style="color: #333399; font-weight: bold">int</span> i<span style="color: #333333">=</span><span style="color: #0000DD; font-weight: bold">0</span>; i<span style="color: #333333">&lt;</span>ARR_SIZE; i<span style="color: #333333">++</span>)tx_characteristic_float.writeValue(motor_pcnts[i]);
+}
+        </pre></div>
+        <h4>Python code to receive data:</h4>
+        <!-- HTML generated using hilite.me -->
+        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">pid_data_callback_handler</span>(<span style="color: #007020">self</span>, uuid, byte_arr):
+            <span style="color: #888888"># Append a tuple (value, time) to a list</span>
+            fl <span style="color: #333333">=</span> ble<span style="color: #333333">.</span>bytearray_to_float(byte_arr)
+            <span style="color: #888888"># print(str(fl))</span>
+            <span style="color: #008800; font-weight: bold">if</span> <span style="color: #007020">len</span>(<span style="color: #007020">self</span><span style="color: #333333">.</span>data_list[<span style="color: #007020">self</span><span style="color: #333333">.</span>feature_ind]) <span style="color: #333333">&lt;</span> <span style="color: #007020">self</span><span style="color: #333333">.</span>ARR_SIZE:
+                <span style="color: #007020">self</span><span style="color: #333333">.</span>data_list[<span style="color: #007020">self</span><span style="color: #333333">.</span>feature_ind]<span style="color: #333333">.</span>append(fl)
+            <span style="color: #008800; font-weight: bold">elif</span> <span style="color: #007020">self</span><span style="color: #333333">.</span>feature_ind <span style="color: #333333">&lt;</span> <span style="color: #007020">len</span>(<span style="color: #007020">self</span><span style="color: #333333">.</span>feature_names_list)<span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">1</span>:
+                <span style="color: #007020">self</span><span style="color: #333333">.</span>feature_ind <span style="color: #333333">=</span> <span style="color: #007020">self</span><span style="color: #333333">.</span>feature_ind <span style="color: #333333">+</span> <span style="color: #0000DD; font-weight: bold">1</span>
+                <span style="color: #007020">self</span><span style="color: #333333">.</span>data_list[<span style="color: #007020">self</span><span style="color: #333333">.</span>feature_ind]<span style="color: #333333">.</span>append(fl)
+            <span style="color: #008800; font-weight: bold">else</span>: <span style="color: #008800; font-weight: bold">print</span>(<span style="background-color: #fff0f0">&quot;unexpected data&quot;</span>)
+            
+            <span style="color: #008800; font-weight: bold">if</span> <span style="color: #007020">self</span><span style="color: #333333">.</span>feature_ind <span style="color: #333333">==</span> <span style="color: #007020">len</span>(<span style="color: #007020">self</span><span style="color: #333333">.</span>feature_names_list)<span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">1</span> <span style="color: #000000; font-weight: bold">and</span> <span style="color: #007020">len</span>(<span style="color: #007020">self</span><span style="color: #333333">.</span>data_list[<span style="color: #007020">self</span><span style="color: #333333">.</span>feature_ind]) <span style="color: #333333">==</span> <span style="color: #007020">self</span><span style="color: #333333">.</span>ARR_SIZE <span style="color: #333333">-</span> <span style="color: #0000DD; font-weight: bold">1</span>:
+                <span style="color: #008800; font-weight: bold">print</span>(<span style="background-color: #fff0f0">&quot;done recieving&quot;</span>)
+        </pre></div>
+        <p>
+            Because the sizes of the PID output arrays are constant parameters that I decide, I chose to have my Python code utilize knowledge of the data array sizes in order to simplify transmission. Once PID operation is complete, the Artemis simply sends all
+            float data representing the TOF sensor data, time stamps, and motor inputs in that order using the TX float characteristic from Lab 2. The Python notification handler keeps track of what data has already been received and stores incoming data
+            accordingly.
+        </p>
+        <h3>PID Control:</h3>
+        <p>
+            Next up is to actually implement the PID control in order to complete a task and obtain data in the process. I decided to implement task A, which was to stop 300mm away from a wall. The intended behavior was to send a command over BLE to the robot, which
+            would then execute PID until its data arrays were full, at which point the car stops entirely and sends diagnostic data back to the desktop in the manner described above. This was implemented with the following code:
+        </p>
+        <h4>Outer loop logic:</h4>
+        <!-- HTML generated using hilite.me -->
+        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">            <span style="color: #008800; font-weight: bold">if</span> (do_PID){
+            <span style="color: #008800; font-weight: bold">if</span>(sensor_data_ready() <span style="color: #333333">&amp;&amp;</span> measure_count <span style="color: #333333">&lt;</span> ARR_SIZE){
+                <span style="color: #888888">//Doing PID and just got new sensor reading</span>
+                curr_mil <span style="color: #333333">=</span> millis();
+                new_tof <span style="color: #333333">=</span> get_front_tof();
+                pcnt <span style="color: #333333">=</span> pid(measure_count, curr_mil, new_tof);
+                
+                move_speed(pcnt);
+                store_data(measure_count, curr_mil, new_tof, pcnt);
+                measure_count <span style="color: #333333">++</span>;
+                
+              }
+              <span style="color: #008800; font-weight: bold">else</span> <span style="color: #008800; font-weight: bold">if</span> (measure_count <span style="color: #333333">&gt;=</span> ARR_SIZE){
+                active_stop();
+                write_data();
+                do_PID <span style="color: #333333">=</span> <span style="color: #007020">false</span>;
+              }
+            }
+        </pre></div>
+
+        <h4>PID function:</h4>
+        <!-- HTML generated using hilite.me -->
+        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #333399; font-weight: bold">float</span> <span style="color: #0066BB; font-weight: bold">pid</span>(<span style="color: #333399; font-weight: bold">int</span> index, <span style="color: #333399; font-weight: bold">long</span> time_stamp, <span style="color: #333399; font-weight: bold">int</span> tof_dist){
+  <span style="color: #333399; font-weight: bold">int</span> error <span style="color: #333333">=</span> tof_dist <span style="color: #333333">-</span> TARGET_DIST;  
+   
+  <span style="color: #333399; font-weight: bold">float</span> deriv;
+  <span style="color: #008800; font-weight: bold">if</span> (index <span style="color: #333333">==</span> <span style="color: #0000DD; font-weight: bold">0</span>){
+    deriv <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+    integrator <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+  }
+  <span style="color: #008800; font-weight: bold">else</span>{
+    <span style="color: #333399; font-weight: bold">int</span> dt <span style="color: #333333">=</span> time_stamp <span style="color: #333333">-</span> times[index<span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">1</span>];
+    deriv <span style="color: #333333">=</span> (tof_dist <span style="color: #333333">-</span> front_tof_readings[index<span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">1</span>]) <span style="color: #333333">/</span> dt;
+    integrator <span style="color: #333333">=</span> integrator <span style="color: #333333">+</span> dt<span style="color: #333333">*</span>error;
+  }
+  <span style="color: #333399; font-weight: bold">float</span> raw <span style="color: #333333">=</span> KP <span style="color: #333333">*</span> error <span style="color: #333333">+</span> KI <span style="color: #333333">*</span> integrator <span style="color: #333333">+</span> KD <span style="color: #333333">*</span> deriv;
+  <span style="color: #008800; font-weight: bold">if</span> (raw <span style="color: #333333">&gt;</span> <span style="color: #0000DD; font-weight: bold">100</span>) <span style="color: #008800; font-weight: bold">return</span> <span style="color: #0000DD; font-weight: bold">100</span>;
+  <span style="color: #008800; font-weight: bold">if</span> (raw <span style="color: #333333">&lt;</span> <span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">100</span>) <span style="color: #008800; font-weight: bold">return</span> <span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">100</span>;
+  <span style="color: #008800; font-weight: bold">return</span> raw;
+}
+        </pre></div>
+
+        <h3>Tuning PID:</h3>
+        <p>
+            At first, I tried using only a P controller and set my KI and KD parameters to zero. However, even with small KP I was getting a significant amount of overshoot due to slow sensor readings and an inability to slow down sufficiently. This led to the robot
+            hitting the wall on several trials. I added a non-zero KD term to the controller which succeeded in dampening the output. Below is a video of my most successful trial using a PD controller, and graphs of the sensor readings and motor inputs
+            used. The motor inputs are percentages which are scaled into PWM values using the scaling function
+            <br>PWM = 20 + 0.85 * pcnt<br> This avoids the deadband and gives a max PWM input of 105.
+        </p>
+        <h4>Video of PD Control for Task A:</h4>
+        <video width="320" height="240" controls>
+            <source src="lab content/lab 6 content/pd_video.mov">
+            Your browser does not support the video tag.
+        </video>
+        <h4>Plots of PD Control outputs for Task A:</h4>
+        <img width="500" src="lab content/lab 6 content/pd_plots.png">
+
+    </section>
+
+</body>
+
+</html>
