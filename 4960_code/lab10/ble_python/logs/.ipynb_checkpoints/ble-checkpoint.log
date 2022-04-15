@@ -1,0 +1,47 @@
+2022-02-09 21:34:05,914 | MainThread   | [DEBUG   ] | <module>            |: debug
+2022-02-09 21:34:05,916 | MainThread   | [INFO    ] | <module>            |: info
+2022-02-09 21:34:05,918 | MainThread   | [WARNING ] | <module>            |: warning
+2022-02-09 21:34:05,919 | MainThread   | [ERROR   ] | <module>            |: error
+2022-02-09 21:34:05,923 | MainThread   | [CRITICAL] | <module>            |: critical
+2022-02-09 21:38:15,357 | MainThread   | [DEBUG   ] | __init__            |: Python Info: sys.version_info(major=3, minor=9, micro=2, releaselevel='final', serial=0)
+2022-02-09 21:38:15,357 | MainThread   | [DEBUG   ] | __init__            |: System Info: Windows-10-10.0.22000-SP0
+2022-02-09 21:38:15,357 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: C0:C2:8A:89:98:08
+2022-02-09 21:38:25,521 | MainThread   | [ERROR   ] | _connect            |: Device with address C0:C2:8A:89:98:08 was not found.
+2022-02-09 21:38:26,523 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2022-02-09 21:38:26,526 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: C0:C2:8A:89:98:08
+2022-02-09 21:38:36,576 | MainThread   | [ERROR   ] | _connect            |: Device with address C0:C2:8A:89:98:08 was not found.
+2022-02-09 21:38:37,585 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2022-02-09 21:38:37,587 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: C0:C2:8A:89:98:08
+2022-02-09 21:38:47,606 | MainThread   | [ERROR   ] | _connect            |: Device with address C0:C2:8A:89:98:08 was not found.
+2022-02-09 21:38:48,612 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2022-02-09 21:49:15,495 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:7:48:8d:98:44
+2022-02-09 21:49:25,538 | MainThread   | [ERROR   ] | _connect            |: Device with address c0:7:48:8d:98:44 was not found.
+2022-02-09 21:49:26,541 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2022-02-09 21:49:26,546 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:7:48:8d:98:44
+2022-02-09 21:49:36,592 | MainThread   | [ERROR   ] | _connect            |: Device with address c0:7:48:8d:98:44 was not found.
+2022-02-09 21:49:37,612 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2022-02-09 21:49:37,619 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:7:48:8d:98:44
+2022-02-09 21:49:47,654 | MainThread   | [ERROR   ] | _connect            |: Device with address c0:7:48:8d:98:44 was not found.
+2022-02-09 21:49:48,670 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2022-02-09 21:52:27,299 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:7:48:8d:98:44
+2022-02-09 21:52:37,328 | MainThread   | [ERROR   ] | _connect            |: Device with address c0:7:48:8d:98:44 was not found.
+2022-02-09 21:52:38,340 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2022-02-09 21:52:38,349 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:7:48:8d:98:44
+2022-02-09 21:52:48,405 | MainThread   | [ERROR   ] | _connect            |: Device with address c0:7:48:8d:98:44 was not found.
+2022-02-09 21:52:49,424 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2022-02-09 21:52:49,428 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:7:48:8d:98:44
+2022-02-09 21:52:59,486 | MainThread   | [ERROR   ] | _connect            |: Device with address c0:7:48:8d:98:44 was not found.
+2022-02-09 21:53:00,494 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2022-02-09 21:54:40,461 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:48:8d:98:44
+2022-02-09 21:59:35,223 | MainThread   | [ERROR   ] | _connect            |: [WinError -2147024894] The system cannot find the file specified
+2022-02-09 21:59:36,231 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2022-02-09 21:59:36,236 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:48:8d:98:44
+2022-02-09 22:06:15,380 | MainThread   | [ERROR   ] | _connect            |: [WinError -2147024894] The system cannot find the file specified
+2022-02-09 22:06:16,396 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2022-02-09 22:06:16,398 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:48:8d:98:44
+2022-02-09 22:11:47,724 | MainThread   | [ERROR   ] | _connect            |: [WinError -2147024894] The system cannot find the file specified
+2022-02-09 22:11:48,733 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2022-02-09 22:20:33,573 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:48:8d:98:44
+2022-02-09 22:22:38,341 | MainThread   | [ERROR   ] | _connect            |: [WinError -2147024894] The system cannot find the file specified
+2022-02-09 22:22:39,351 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2022-02-09 22:22:39,351 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:48:8d:98:44

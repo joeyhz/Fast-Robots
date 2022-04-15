@@ -23,12 +23,12 @@
 #include "SparkFun_VL53L1X.h" //Click here to get the library: http://librarymanager/All#SparkFun_VL53L1X
 
 //Optional interrupt and shutdown pins.
-#define SHUTDOWN_PIN 8
+#define SHUTDOWN_PIN A0
 #define INTERRUPT_PIN 3
 
 
 //Uncomment the following line to use the optional shutdown and interrupt pins.
-SFEVL53L1X distanceSensor1(Wire, SHUTDOWN_PIN, INTERRUPT_PIN);
+SFEVL53L1X distanceSensor1(Wire, SHUTDOWN_PIN);
 SFEVL53L1X distanceSensor2;
 
 void setup(void)
@@ -48,8 +48,8 @@ void setup(void)
       ;
   }
   Serial.println("Sensor 2 online!");
-
   digitalWrite(SHUTDOWN_PIN, LOW); // Shut off ToF 1
+
   distanceSensor2.setI2CAddress(0x22);
   digitalWrite(SHUTDOWN_PIN, HIGH); // Shut off ToF 1
 

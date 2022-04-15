@@ -1,24 +1,35 @@
 #ifndef MOTOR_FUNCS_H
 #define MOTOR_FUNCS_H
 
-#define LFP 4
-#define LBP A5
-#define RFP 6
-#define RBP 7
+#define LFP A5
+#define LBP 4
+#define RFP 7
+#define RBP 6
 
 
 void active_stop(){
-    analogWrite(LFP, 0);
-    analogWrite(LBP, 0);
+      //left forward
+      analogWrite(LFP, 10);
+      analogWrite(LBP, 0);
   
-    analogWrite(RFP, 0);
-    analogWrite(RBP, 0);
+      //right forward
+      analogWrite(RFP, 0);
+      analogWrite(RBP, 10);
+}
+
+void passive_stop(){
+      analogWrite(LFP, 0);
+      analogWrite(LBP, 0);
+  
+      //right forward
+      analogWrite(RFP, 0);
+      analogWrite(RBP, 0);
 }
 
 void move_speed (float pcnt_speed){
     int motor_input;
     if (pcnt_speed > 0){//move forward
-      motor_input = (int)(30 + pcnt_speed * 2.25);
+      motor_input = (int)(20 + pcnt_speed * 0.85 );
       //left forward
       analogWrite(LFP, 0);
       analogWrite(LBP, motor_input);
@@ -27,8 +38,9 @@ void move_speed (float pcnt_speed){
       analogWrite(RFP, motor_input);
       analogWrite(RBP, 0);
     }
-    else{//move backwards
-      motor_input = (int)(30 + pcnt_speed * -2.25);
+    else if (pcnt_speed < 0){
+      //move backwards
+      motor_input = (int)(20 + pcnt_speed * -0.5);
       //left forward
       analogWrite(LFP, motor_input);
       analogWrite(LBP, 0);
@@ -37,5 +49,13 @@ void move_speed (float pcnt_speed){
       analogWrite(RFP, 0);
       analogWrite(RBP, motor_input);
     }
+//    else{
+//      //active break 
+//      digitalWrite(LFP, 0);
+//      digitalWrite(LBP, 0);
+//  
+//      digitalWrite(RFP, 0);
+//      digitalWrite(RBP, 0);
+//    }
 }
 #endif

@@ -34,19 +34,21 @@ float tx_float_value = 0.0;
 
 
 bool do_PID = false;
+bool moving_forward = false;
+float forward_spd = 0;
 int measure_count = 0;
 unsigned long startMillis = 0;
 
-#define ARR_SIZE 200
+#define ARR_SIZE 100
 int front_tof_readings[ARR_SIZE];
 long times[ARR_SIZE];
 float motor_pcnts[ARR_SIZE];
 
 int TARGET_DIST = 300;
 
-#define KP 1.0
+float KP = 0.05;
 #define KI 0.0
-#define KD 0.0
+#define KD 0.5
 
 int integrator = 0;
 //////////// Global Variables ////////////
@@ -56,11 +58,18 @@ enum CommandTypes
     WALL_PID,
     STOP,
     MOVE_FORWARD,
+    SET_KP
 };
 
-void
-handle_command()
-{   
+void reset_data(){
+  do_PID = false;
+  moving_forward= false;
+  forward_spd = 0;
+  measure_count = 0;
+  startMillis = 0;
+}
+
+void handle_command(){   
     // Set the command string from the characteristic value
     robot_cmd.set_cmd_string(rx_characteristic_string.value(),
                              rx_characteristic_string.valueLength());
@@ -86,8 +95,18 @@ handle_command()
           do_PID = true;
           break;
         case STOP:
+          active_stop();
           break;
         case MOVE_FORWARD:
+          success = robot_cmd.get_next_value(forward_spd);
+          if (!success)
+            return;
+          moving_forward = true;
+          break;
+        case SET_KP:
+          success = robot_cmd.get_next_value(KP);
+          if (!success)
+            return;
           break;
         default:
           Serial.print("Invalid Command Type: ");
@@ -125,6 +144,7 @@ void setup(){
 }
 
 void write_data(){
+  Serial.println("Write data");
   for (int i=0; i<ARR_SIZE; i++)tx_characteristic_float.writeValue(front_tof_readings[i]*1.0);
   for (int i=0; i<ARR_SIZE; i++)tx_characteristic_float.writeValue(times[i]*1.0);
   for (int i=0; i<ARR_SIZE; i++)tx_characteristic_float.writeValue(motor_pcnts[i]);
@@ -186,26 +206,58 @@ void loop(){
     if (central) {
         Serial.print("Connected to: ");
         Serial.println(central.address());
+        reset_data();
 
         // While central is connected
         while (central.connected()) {
             // Read data
             read_data();
 
-            if (do_PID && sensor_data_ready() && measure_count < ARR_SIZE){
-              //Doing PID and just got new sensor reading
-              curr_mil = millis();
-              new_tof = get_front_tof();
-              pcnt = pid(measure_count, curr_mil, new_tof);
-              
-              move_speed(pcnt);
-              store_data(measure_count, curr_mil, new_tof, pcnt);
-              measure_count ++;
-              
+            if (do_PID){
+              if(sensor_data_ready() && measure_count < ARR_SIZE){
+                //Doing PID and just got new sensor reading
+                curr_mil = millis();
+                new_tof = get_front_tof();
+                pcnt = pid(measure_count, curr_mil, new_tof);
+                
+                move_speed(pcnt);
+                store_data(measure_count, curr_mil, new_tof, pcnt);
+                measure_count ++;
+                
+              }
+              else if (measure_count >= ARR_SIZE){
+                active_stop();
+                write_data();
+                do_PID = false;
+              }
             }
-            else if (do_PID && measure_count >= ARR_SIZE){
-             active_stop();
-              write_data();
+            
+            else if (moving_forward){
+              if(sensor_data_ready()){
+                curr_mil = millis();
+                new_tof = get_front_tof();
+                
+                if (measure_count < 20 || (measure_count >= ARR_SIZE - 20 && measure_count < ARR_SIZE)){
+                  //pre/post step
+                  store_data(measure_count, curr_mil, new_tof, 0);
+                  measure_count ++;
+                }
+                else if (measure_count < ARR_SIZE - 20){
+                  //step
+                  if (new_tof < 250) active_stop();
+                  else move_speed(forward_spd);
+                  
+                  store_data(measure_count, curr_mil, new_tof, forward_spd);
+                  measure_count ++;
+                
+                }
+                else if (measure_count >= ARR_SIZE){
+                  //done
+                  passive_stop();
+                  write_data();
+                  moving_forward = false;
+                }
+              }
             }
         }
 
