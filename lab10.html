@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Fast Robots Wiki</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="robot-car-icon.jpg">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+</head>
+
+<body>
+    <section class="page-header">
+        <h1 class="project-name">Fast Robots</h1>
+        <h2 class="project-tagline">Joseph Horwitz's Wiki for ECE 4960 Fast Robots Course</h2>
+        <a target="_blank" href="https://github.com/joeyhz/Fast-Robots" class="btn">View on GitHub</a>
+    </section>
+    <section class="main-content">
+        <h2>Lab 10 - Simulator:</h2>
+
+        <p>
+            In this lab I setup and gained experience with the FlatLand simulator environment, which will be used for modelling robot control and localization in the next few labs. I also implemented simple closed loop collision avoidance functionality.
+        </p>
+        <h3>Simulator:</h3>
+        <p>
+            The FlatLand simulator developed for this course simulates the behavior of our robots from labs 1-9 but in a simplified, 2D environment. It consists of two parts, the simulator and the plotter. Both of these elements are controlled by the python Commander
+            class. Functionality for the simulator includes setting robot velocity (both linear and angular), getting true pose and sensor values, and resetting the robot to its initial position. The simulator runs a GUI showing the robot in an environment
+            replicating the one set up in lab. Thus the simulator can replicate the behavior of our robots in a simplified environment and produce both sensor measurements and ground truth values for comparison. The plotter can produce a solid line map
+            replicating the physical robot environment set up in lab and plot XY points in three colors: red for odometry, green for ground truth, and blue for belief. Thus the plotter can be used to conveniently compare the true and calculated values
+            of robot location in context with the map the robot is operating in.
+        </p>
+        <h4>Simulator GUI at initial position:</h4>
+        <img width="500" src="lab content/lab 10 content/simulator.png">
+        <p>The small grey rectangle is the robot and the line protruding from it represents it's front TOF beam.</p>
+        <h3>
+            Open Loop Control:
+        </h3>
+        <p>
+            For this part of the lab, I designed a simple procedural algorithm to make the simulated robot move in a square pattern. At each corner of the square I plotted odometry and ground truth data. The procedure was to move straight at 1 m/s for 0.5 seconds,
+            then stop and turn at 1rad/s for approximately pi/2 seconds. This was repeated four times, once for each edge of the square. Below is my procedural code, a screen recording of the simulated car moving, and the plotter output it generated.
+        </p>
+        <h4>
+            Code for open loop control:
+        </h4>
+        <!-- HTML generated using hilite.me -->
+        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">plot_pose</span>():
+            pose, gt_pose <span style="color: #333333">=</span> cmdr<span style="color: #333333">.</span>get_pose()
+            cmdr<span style="color: #333333">.</span>plot_odom(pose[<span style="color: #0000DD; font-weight: bold">0</span>], pose[<span style="color: #0000DD; font-weight: bold">1</span>])
+            cmdr<span style="color: #333333">.</span>plot_gt(gt_pose[<span style="color: #0000DD; font-weight: bold">0</span>], gt_pose[<span style="color: #0000DD; font-weight: bold">1</span>])
+
+        cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #0000DD; font-weight: bold">1</span>,<span style="color: #0000DD; font-weight: bold">0</span>)
+        plot_pose()
+        await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #6600EE; font-weight: bold">0.5</span>)
+        cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #0000DD; font-weight: bold">0</span>,<span style="color: #0000DD; font-weight: bold">1</span>)
+        plot_pose()
+        await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #6600EE; font-weight: bold">1.6</span>)
+
+        cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #0000DD; font-weight: bold">1</span>,<span style="color: #0000DD; font-weight: bold">0</span>)
+        plot_pose()
+        await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #6600EE; font-weight: bold">0.5</span>)
+        cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #0000DD; font-weight: bold">0</span>,<span style="color: #0000DD; font-weight: bold">1</span>)
+        await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #6600EE; font-weight: bold">1.6</span>)
+
+        cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #0000DD; font-weight: bold">1</span>,<span style="color: #0000DD; font-weight: bold">0</span>)
+        plot_pose()
+        await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #6600EE; font-weight: bold">0.5</span>)
+        cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #0000DD; font-weight: bold">0</span>,<span style="color: #0000DD; font-weight: bold">1</span>)
+        plot_pose()
+        await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #6600EE; font-weight: bold">1.6</span>)
+
+        cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #0000DD; font-weight: bold">1</span>,<span style="color: #0000DD; font-weight: bold">0</span>)
+        plot_pose()
+        await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #6600EE; font-weight: bold">0.5</span>)
+        cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #0000DD; font-weight: bold">0</span>,<span style="color: #0000DD; font-weight: bold">1</span>)
+        plot_pose()
+        await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #6600EE; font-weight: bold">1.6</span>)
+        </pre></div>
+
+        <p>
+            The Commander set_vel(lin_v, ang_v) function moves the car for a theoretically infinite duration. It sets the linear and angular velocity to values lin_v in m/s and ang/v in rad/s and leaves the car in that state until the next time set_vel is called
+            or until the car hits a wall. In order to make the car move for a limited time, I used the asyncio sleep function between calls of set_vel.
+        </p>
+
+        <h4>Video of open loop motion:</h4>
+        <video width="320" height="240" controls>
+            <source src="lab content/lab 10 content/open loop.mp4">
+            Your browser does not support the video tag.
+        </video>
+
+        <p>
+            The simulated robot moves imperfectly with slight inconsistencies in movement durations, despite the fact that each call to asyncio.sleep is identical for a given motion (turning or moving along an edge).
+        </p>
+
+        <h3>Pose Plot: (green is ground truth, red is odometry)</h3>
+        <img width="500" src="lab content/lab 10 content/open_loop_pose.png">
+
+        <p>
+            From the pose plot, it is clear that the robot's odometry in red, which simulates IMU data, does not present an accurate depiction of where it actually is. True location is given in green as the ground truth. This inaccuracy is due to snowballing accumulation
+            of error in the integration needed to obtain position from IMU accelerometer and gyroscope data. Further, on multiple trials of the open loop control slightly different shapes were formed, likely due to inconsistencies in execution, especially
+            in the use of asyncio.sleep which is device specific.
+        </p>
+
+        <h3>Closed Loop Control:</h3>
+        <p>
+            The next step in the lab is to code closed loop control obstacle avoidance for the simulated robot. To do this I went through several iterations using the front TOF sensor as input. This input is accessed through the Commander get_sensor function. First,
+            I tried a simple algorithm where the robot would turn away from walls ahead in proportion to how close the wall is to the robot. The code was as below:
+        </p>
+
+        <h4>
+            Code for initial closed loop control:
+        </h4>
+
+        <!-- HTML generated using hilite.me -->
+        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #6600EE; font-weight: bold">0.5</span>, <span style="color: #0000DD; font-weight: bold">0</span>)
+
+            <span style="color: #008800; font-weight: bold">while</span> cmdr<span style="color: #333333">.</span>sim_is_running() <span style="color: #000000; font-weight: bold">and</span> cmdr<span style="color: #333333">.</span>plotter_is_running():
+            sensor_values <span style="color: #333333">=</span> cmdr<span style="color: #333333">.</span>get_sensor()
+            plot_pose()
+            <span style="color: #008800; font-weight: bold">if</span> sensor_values[<span style="color: #0000DD; font-weight: bold">0</span>] <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">1</span>:
+                cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #6600EE; font-weight: bold">0.5</span>, <span style="color: #0000DD; font-weight: bold">3</span><span style="color: #333333">-</span>sensor_values[<span style="color: #0000DD; font-weight: bold">0</span>])
+        </pre></div>
+
+        <p>
+            This worked decently well, but had one major flaw. The beam of the simulated front tof sensor is extremely narrow, far more narrow than the robot itself. With the above algorithm, the robot moved straight except for when it perceived a nearby wall. So
+            when using this control system, the beam could narrowly miss a wall which caused the robot to believe it had a safe path forward. Then the edge of the car would collide with an obstacle. To solve this, I decided the robot should oscillate
+            back and forth while moving and turn toward whichever direction showed a greater distance to an obstacle. That way, rather than glancing off of obstacles that are narrowly off center from it, it would oscillate towards them, see a small distance,
+            and turn away. Below is a the code used, a screen capture of this control system in action and a plot of the pose output.
+        </p>
+
+        <h4>
+            Code for final closed loop control:
+        </h4>
+        <!-- HTML generated using hilite.me -->
+        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">osc <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">2</span>
+        last_tof <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">1</span>
+
+        cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #6600EE; font-weight: bold">0.5</span>, <span style="color: #0000DD; font-weight: bold">0</span>)
+        
+        <span style="color: #008800; font-weight: bold">while</span> cmdr<span style="color: #333333">.</span>sim_is_running() <span style="color: #000000; font-weight: bold">and</span> cmdr<span style="color: #333333">.</span>plotter_is_running():
+            sensor_values <span style="color: #333333">=</span> cmdr<span style="color: #333333">.</span>get_sensor()
+            plot_pose()
+            <span style="color: #008800; font-weight: bold">if</span> sensor_values[<span style="color: #0000DD; font-weight: bold">0</span>] <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">1</span>:
+                cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #6600EE; font-weight: bold">0.5</span>, <span style="color: #0000DD; font-weight: bold">3</span><span style="color: #333333">-</span>sensor_values[<span style="color: #0000DD; font-weight: bold">0</span>])
+            <span style="color: #008800; font-weight: bold">elif</span> sensor_values[<span style="color: #0000DD; font-weight: bold">0</span>] <span style="color: #333333">&lt;</span> last_tof: 
+                cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #6600EE; font-weight: bold">0.5</span>, <span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">1</span><span style="color: #333333">*</span>osc)
+            <span style="color: #008800; font-weight: bold">else</span>:
+                cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #6600EE; font-weight: bold">0.5</span>, osc)
+            osc <span style="color: #333333">*=</span> <span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">1</span>
+            last_tof <span style="color: #333333">=</span> sensor_values[<span style="color: #0000DD; font-weight: bold">0</span>]
+        </pre></div>
+
+
+        <p>
+            The functionality from the initial control code iteration is maintained because it was effective at avoiding walls when they were sensed nearby. However, rather than simply going straight when no walls are in front, the car searches for obstacles in its
+            path. The osc value switches back and forth, and at each oscillation the front sensor value is taken and stored. When there is a change the car tends to turn toward an obstacle, which is actually helpful in making the obstacle avoidance from
+            above work because the obstacle is sighted.
+        </p>
+
+        <h4>Video of closed loop motion:</h4>
+        <video width="320" height="240" controls>
+            <source src="lab content/lab 10 content/closed loop 0_5.mp4">
+            Your browser does not support the video tag.
+        </video>
+
+        <p>
+            Success! This was taken with a linear velocity of 0.5 m/s.
+        </p>
+
+        <h4>Pose Plot: (green is ground truth, red is odometry)</h4>
+        <img width="500" src="lab content/lab 10 content/closed loop 0_5.png">
+
+        <p>
+            From this plot it can be seen that the robot traversal of the maze was stable and covered all areas of the map.
+        </p>
+
+        <h3>Faster linear velocity:</h3>
+        <video width="320" height="240" controls>
+            <source src="lab content/lab 10 content/closed loop 0_5.mp4">
+            Your browser does not support the video tag.
+        </video>
+        <p>
+            This is the car moving at 0.75 m/s. It does a decent job avoiding obstacles but eventually collides due to not having time to turn away from a wall after sensing it late.
+        </p>
+        <h4>Pose Plot: </h4>
+        <img width="500" src="lab content/lab 10 content/closed loop 0_5.png">
+        <p>
+            The robot successfully traversed the whole map but eventually collided at a corner. To guarantee collision avoidance the control should be run at a speed of 0.5 m/s or less.
+        </p>
+
+
+    </section>
+
+</body>
+
+</html>
