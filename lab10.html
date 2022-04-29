@@ -94,11 +94,14 @@
             The simulated robot moves imperfectly with slight inconsistencies in movement durations, despite the fact that each call to asyncio.sleep is identical for a given motion (turning or moving along an edge).
         </p>
 
-        <h3>Pose Plot: (green is ground truth, red is odometry)</h3>
+        <h3>Pose Plot 1: (green is ground truth, red is odometry)</h3>
         <img width="500" src="lab content/lab 10 content/open_loop_pose.png">
 
+        <h3>Pose Plot 2: (same exact code as the first run)</h3>
+        <img width="500" src="lab content/lab 10 content/open loop 2.png">
+
         <p>
-            From the pose plot, it is clear that the robot's odometry in red, which simulates IMU data, does not present an accurate depiction of where it actually is. True location is given in green as the ground truth. This inaccuracy is due to snowballing accumulation
+            From the pose plots, it is clear that the robot's odometry in red, which simulates IMU data, does not present an accurate depiction of where it actually is. True location is given in green as the ground truth. This inaccuracy is due to snowballing accumulation
             of error in the integration needed to obtain position from IMU accelerometer and gyroscope data. Further, on multiple trials of the open loop control slightly different shapes were formed, likely due to inconsistencies in execution, especially
             in the use of asyncio.sleep which is device specific.
         </p>
