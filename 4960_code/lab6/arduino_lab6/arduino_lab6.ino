@@ -5,6 +5,9 @@
 #include "SensorFuncs.h"
 #include "MotorFuncs.h"
 
+#include <BasicLinearAlgebra.h>  //Use this library to work with matrices:
+using namespace BLA;             //This allows you to declare a matrix
+
 
 #include <ArduinoBLE.h>
 
@@ -34,6 +37,7 @@ float tx_float_value = 0.0;
 
 
 bool do_PID = false;
+bool do_KF = false;
 bool moving_forward = false;
 float forward_spd = 0;
 int measure_count = 0;
@@ -43,6 +47,11 @@ unsigned long startMillis = 0;
 int front_tof_readings[ARR_SIZE];
 long times[ARR_SIZE];
 float motor_pcnts[ARR_SIZE];
+
+//for KF:
+Matrix<2,1> kf_vals[ARR_SIZE];
+Matrix<2,2> sigmas[ARR_SIZE];
+
 
 int TARGET_DIST = 300;
 
@@ -56,6 +65,7 @@ int integrator = 0;
 enum CommandTypes
 {
     WALL_PID,
+    WALL_KF,
     STOP,
     MOVE_FORWARD,
     SET_KP
@@ -93,6 +103,9 @@ void handle_command(){
     switch (cmd_type) {
         case WALL_PID:
           do_PID = true;
+          break;
+        case WALL_KF:
+          do_KF = true;
           break;
         case STOP:
           active_stop();
@@ -143,26 +156,27 @@ void setup(){
     BLE.advertise();
 }
 
-void write_data(){
+void write_pid_data(){
   Serial.println("Write data");
   for (int i=0; i<ARR_SIZE; i++)tx_characteristic_float.writeValue(front_tof_readings[i]*1.0);
   for (int i=0; i<ARR_SIZE; i++)tx_characteristic_float.writeValue(times[i]*1.0);
-  for (int i=0; i<ARR_SIZE; i++)tx_characteristic_float.writeValue(motor_pcnts[i]);
+  for (int i=0; i<ARR_SIZE; i++)tx_characteristic_float.writeValue(motor_pcnts[i]); 
 }
 
-void store_data(int index, long curr_mill, int new_tof, float pcnt){
-  Serial.println("Index: ");
-  Serial.print(index);
-  Serial.print(", Time (ms): ");
-  Serial.print(curr_mill);
-  Serial.print(", TOF dist (mm): ");
-  Serial.print(new_tof);
-  Serial.print(", Motor %: ");
-  Serial.print(pcnt);
-  
+void write_kf_data(){
+    for (int i=0; i<ARR_SIZE; i++)tx_characteristic_float.writeValue(kf_vals[i](1,0));
+//  for (int i=0; i<ARR_SIZE; i++)tx_characteristic_float.writeValue(sigmas[i]());
+}
+
+void store_pid_data(int index, long curr_mill, int new_tof, float pcnt){  
   front_tof_readings[index] = new_tof;
   times[index] = curr_mill;
   motor_pcnts[index] = pcnt;
+}
+
+void store_kf_data(int index, Matrix<2,1> kf_x, Matrix<2,2> sigma){
+  kf_vals[index] = kf_x;
+  sigmas[index] = sigma;
 }
 
 void read_data()
@@ -187,9 +201,65 @@ float pid(int index, long time_stamp, int tof_dist){
     integrator = integrator + dt*error;
   }
   float raw = KP * error + KI * integrator + KD * deriv;
-  if (raw > 100) return 100;
-  if (raw < -100) return -100;
-  return raw;
+  
+  float ret;
+  if (raw > 100) ret= 100;
+  if (raw < -100) ret= -100;
+  store_pid_data(index, time_stamp, tof_dist, ret);
+  return ret;
+}
+
+
+///////KALMAN FILTER////
+Matrix<2,2> A = {0, 1,
+                 0, -2.9};  
+Matrix<2,1> B = {0, 5.235};
+Matrix<1,2> C = {-1, 0};
+
+Matrix<2,2> sigma_u = {100, 0,
+                      0, 100};
+Matrix<1> sigma_z = {400};
+
+Matrix<2,2> I = {1, 0,
+                0, 1};
+                
+#define STEP_SIZE 43.5
+
+float kf(int index, long time_stamp, int tof_dist){
+  if (index = 0){
+    //store initial values
+     Matrix<2,1> mu = {-tof_dist, 0};
+     Matrix<2,2> sigma = {25,0,
+                          0, 25};
+     return mu(1,1);
+  }
+
+  // Get KF inputs for this iteration
+  Matrix<2,1> mu = kf_vals[index-1];
+  Matrix<2,2> sigma = sigmas[index-1];
+  Matrix<1, 1> u = {motor_pcnts[index-1] / STEP_SIZE};
+  Matrix<1> y = {tof_dist}; 
+  int dt = time_stamp - times[index-1];
+  Matrix<2,2> Ad = I + A * dt;
+  Matrix<2,1> Bd = B * dt;
+
+  //predict step
+  Matrix<2,1> mu_p = Ad * mu + Bd * u;
+  Matrix<2,2> sigma_p = Ad*sigma*~Ad + sigma_u; 
+
+  //update step
+  Matrix<1> y_m = y - C * mu_p;
+  Matrix<1,1> sigma_m = C * sigma_p * ~C + sigma_z;
+
+  Matrix<1,1> sigma_m_inv = sigma_m;
+  Invert(sigma_m_inv);
+  Matrix<2,1> kf_gain = sigma_p * ~C * sigma_m_inv; 
+
+  //combine
+  mu = mu_p + kf_gain * y_m;
+  sigma = (I - kf_gain * C) * sigma_p;
+  
+  store_kf_data(index, mu, sigma);
 }
 
 
@@ -199,6 +269,7 @@ void loop(){
     long curr_mil;
     int new_tof;
     float pcnt;
+    float kf_state;
     // Listen for connections
     BLEDevice central = BLE.central();
 
@@ -221,14 +292,34 @@ void loop(){
                 pcnt = pid(measure_count, curr_mil, new_tof);
                 
                 move_speed(pcnt);
-                store_data(measure_count, curr_mil, new_tof, pcnt);
+                store_pid_data(measure_count, curr_mil, new_tof, pcnt);
                 measure_count ++;
                 
               }
               else if (measure_count >= ARR_SIZE){
                 active_stop();
-                write_data();
+                write_pid_data();
                 do_PID = false;
+              }
+            }
+
+            else if (do_KF){
+               if(sensor_data_ready() && measure_count < ARR_SIZE){
+                //Doing KF and just got new sensor reading
+                curr_mil = millis();
+                new_tof = get_front_tof();
+                kf_state = kf(measure_count, curr_mil, new_tof);
+                pcnt = pid(measure_count, curr_mil, kf_state);
+                
+                move_speed(pcnt);
+                measure_count ++;
+                
+              }
+              else if (measure_count >= ARR_SIZE){
+                active_stop();
+                write_pid_data();
+                write_kf_data();
+                do_KF = false;
               }
             }
             
@@ -239,7 +330,7 @@ void loop(){
                 
                 if (measure_count < 20 || (measure_count >= ARR_SIZE - 20 && measure_count < ARR_SIZE)){
                   //pre/post step
-                  store_data(measure_count, curr_mil, new_tof, 0);
+                  store_pid_data(measure_count, curr_mil, new_tof, 0);
                   measure_count ++;
                 }
                 else if (measure_count < ARR_SIZE - 20){
@@ -247,14 +338,14 @@ void loop(){
                   if (new_tof < 250) active_stop();
                   else move_speed(forward_spd);
                   
-                  store_data(measure_count, curr_mil, new_tof, forward_spd);
+                  store_pid_data(measure_count, curr_mil, new_tof, forward_spd);
                   measure_count ++;
                 
                 }
                 else if (measure_count >= ARR_SIZE){
                   //done
                   passive_stop();
-                  write_data();
+                  write_pid_data();
                   moving_forward = false;
                 }
               }
