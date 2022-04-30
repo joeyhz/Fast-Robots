@@ -1,0 +1,12 @@
+2022-04-21 13:40:36,548 | MainThread   | [INFO    ] | get_logger          |: Logger demo_notebook.log initialized.
+2022-04-21 13:41:14,364 | MainThread   | [INFO    ] | get_logger          |: Logger demo_notebook.log already initialized.
+2022-04-21 13:44:52,796 | MainThread   | [INFO    ] | get_logger          |: Logger demo_notebook.log initialized.
+2022-04-21 13:47:29,986 | MainThread   | [INFO    ] | get_logger          |: Logger demo_notebook.log initialized.
+2022-04-21 13:51:17,241 | MainThread   | [INFO    ] | get_logger          |: Logger demo_notebook.log initialized.
+2022-04-21 13:54:43,596 | MainThread   | [INFO    ] | get_logger          |: Logger demo_notebook.log initialized.
+2022-04-21 15:08:21,864 | MainThread   | [INFO    ] | get_logger          |: Logger demo_notebook.log initialized.
+2022-04-21 17:30:44,857 | MainThread   | [INFO    ] | get_logger          |: Logger demo_notebook.log already initialized.
+2022-04-21 17:59:14,730 | MainThread   | [INFO    ] | get_logger          |: Logger demo_notebook.log initialized.
+2022-04-25 13:11:28,261 | MainThread   | [INFO    ] | get_logger          |: Logger demo_notebook.log initialized.
+2022-04-28 14:38:44,015 | MainThread   | [INFO    ] | get_logger          |: Logger demo_notebook.log initialized.
+2022-04-28 14:46:49,686 | MainThread   | [INFO    ] | get_logger          |: Logger demo_notebook.log initialized.

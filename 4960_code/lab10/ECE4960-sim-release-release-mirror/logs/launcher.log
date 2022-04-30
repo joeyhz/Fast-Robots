@@ -1,0 +1,46 @@
+2022-04-21 13:41:14,366 | MainThread   | [INFO    ] | GET_GUI             |: GUI is already running. Shutdown notebook to force restart the GUI.
+2022-04-21 13:44:42,438 | MainThread   | [INFO    ] | exit_handler        |: Exiting...
+2022-04-21 13:47:24,547 | MainThread   | [INFO    ] | exit_handler        |: Exiting...
+2022-04-21 13:50:43,317 | MainThread   | [INFO    ] | exit_handler        |: Exiting...
+2022-04-21 13:53:38,661 | MainThread   | [ERROR   ] | on_click_sim_reset  |: Simulator is not running
+2022-04-21 13:57:24,391 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 13:57:25,008 | MainThread   | [ERROR   ] | start               |: Plotter is already running
+2022-04-21 13:58:36,910 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 13:58:37,540 | MainThread   | [ERROR   ] | start               |: Plotter is already running
+2022-04-21 13:59:49,851 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:03:54,534 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:05:44,790 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:06:48,441 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:08:21,274 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:08:51,776 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:08:54,046 | MainThread   | [ERROR   ] | start               |: Simulator is already running
+2022-04-21 14:10:28,744 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:10:30,510 | MainThread   | [ERROR   ] | start               |: Simulator is already running
+2022-04-21 14:11:24,244 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:11:48,366 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:11:50,360 | MainThread   | [ERROR   ] | start               |: Simulator is already running
+2022-04-21 14:12:06,584 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:13:37,654 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:15:33,001 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:15:57,321 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:16:53,865 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:20:01,821 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:22:28,312 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:27:21,225 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:28:14,883 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:29:37,093 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:31:09,348 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:42:12,725 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:42:54,623 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:45:27,960 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 14:55:46,003 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-21 15:11:12,686 | MainThread   | [INFO    ] | on_click_sim_reset  |: Resetting Simulator
+2022-04-21 17:30:44,871 | MainThread   | [INFO    ] | GET_GUI             |: GUI is already running. Shutdown notebook to force restart the GUI.
+2022-04-21 17:30:52,257 | MainThread   | [ERROR   ] | start               |: Simulator is already running
+2022-04-21 17:30:52,287 | MainThread   | [ERROR   ] | start               |: Plotter is already running
+2022-04-21 17:37:05,201 | MainThread   | [INFO    ] | on_click_sim_reset  |: Resetting Simulator
+2022-04-21 17:59:04,974 | MainThread   | [INFO    ] | exit_handler        |: Exiting...
+2022-04-25 13:11:09,904 | MainThread   | [INFO    ] | exit_handler        |: Exiting...
+2022-04-28 14:41:45,421 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-28 14:42:17,145 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
+2022-04-28 14:43:01,517 | MainThread   | [INFO    ] | start               |: Creating New Simulator Process
