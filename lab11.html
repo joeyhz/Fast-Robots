@@ -27,177 +27,153 @@
         </p>
         <h3>Code:</h3>
         <!-- Code here -->
+        <!-- HTML generated using hilite.me -->
+        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">compute_control</span>(cur_pose, prev_pose):
+    <span style="color: #DD4422">&quot;&quot;&quot; Given the current and previous odometry poses, this function extracts</span>
+    <span style="color: #DD4422">    the control information based on the odometry motion model.</span>
+    
+    <span style="color: #DD4422">    Args:</span>
+    <span style="color: #DD4422">        cur_pose  ([Pose]): Current Pose</span>
+    <span style="color: #DD4422">        prev_pose ([Pose]): Previous Pose </span>
+    
+    <span style="color: #DD4422">    Returns:</span>
+    <span style="color: #DD4422">        [delta_rot_1]: Rotation 1  (degrees)</span>
+    <span style="color: #DD4422">        [delta_trans]: Translation (meters)</span>
+    <span style="color: #DD4422">        [delta_rot_2]: Rotation 2  (degrees)</span>
+    <span style="color: #DD4422">    &quot;&quot;&quot;</span>
+        delta_x, delta_y <span style="color: #333333">=</span> cur_pose[<span style="color: #0000DD; font-weight: bold">0</span>]<span style="color: #333333">-</span>prev_pose[<span style="color: #0000DD; font-weight: bold">0</span>], cur_pose[<span style="color: #0000DD; font-weight: bold">1</span>]<span style="color: #333333">-</span>prev_pose[<span style="color: #0000DD; font-weight: bold">1</span>]
+        move_angle <span style="color: #333333">=</span> np<span style="color: #333333">.</span>arctan2(delta_y, delta_x) <span style="color: #333333">*</span> <span style="color: #0000DD; font-weight: bold">180</span> <span style="color: #333333">/</span> np<span style="color: #333333">.</span>pi
+        delta_rot1 <span style="color: #333333">=</span> mapper<span style="color: #333333">.</span>normalize_angle(move_angle <span style="color: #333333">-</span> prev_pose[<span style="color: #0000DD; font-weight: bold">2</span>])
+        delta_trans <span style="color: #333333">=</span> np<span style="color: #333333">.</span>sqrt(delta_x<span style="color: #333333">**</span><span style="color: #0000DD; font-weight: bold">2</span> <span style="color: #333333">+</span> delta_y<span style="color: #333333">**</span><span style="color: #0000DD; font-weight: bold">2</span>)
+        delta_rot2 <span style="color: #333333">=</span> mapper<span style="color: #333333">.</span>normalize_angle(cur_pose[<span style="color: #0000DD; font-weight: bold">2</span>] <span style="color: #333333">-</span> move_angle)
+        <span style="color: #008800; font-weight: bold">return</span> delta_rot1, delta_trans, delta_rot2
+    
+    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">odom_motion_model</span>(cur_pose, prev_pose, u):
+        <span style="color: #DD4422">&quot;&quot;&quot; Odometry Motion Model</span>
+    
+    <span style="color: #DD4422">    Args:</span>
+    <span style="color: #DD4422">        cur_pose  ([Pose]): Current Pose</span>
+    <span style="color: #DD4422">        prev_pose ([Pose]): Previous Pose</span>
+    <span style="color: #DD4422">        (rot1, trans, rot2) (float, float, float): A tuple with control data in the format </span>
+    <span style="color: #DD4422">                                                   format (rot1, trans, rot2) with units (degrees, meters, degrees)</span>
+    
+    
+    <span style="color: #DD4422">    Returns:</span>
+    <span style="color: #DD4422">        prob [float]: Probability p(x&#39;|x, u)</span>
+    <span style="color: #DD4422">    &quot;&quot;&quot;</span>
+        r_sigma <span style="color: #333333">=</span> loc<span style="color: #333333">.</span>odom_rot_sigma
+        t_sigma <span style="color: #333333">=</span> loc<span style="color: #333333">.</span>odom_trans_sigma
+        dr1, dt, dr2 <span style="color: #333333">=</span> compute_control(cur_pose, prev_pose)
+        
+        dr1_prob <span style="color: #333333">=</span> loc<span style="color: #333333">.</span>gaussian(u[<span style="color: #0000DD; font-weight: bold">0</span>], dr1, r_sigma)
+        dt_prob <span style="color: #333333">=</span> loc<span style="color: #333333">.</span>gaussian(u[<span style="color: #0000DD; font-weight: bold">1</span>], dt, t_sigma)
+        dr2_prob <span style="color: #333333">=</span> loc<span style="color: #333333">.</span>gaussian(u[<span style="color: #0000DD; font-weight: bold">2</span>], dr2, r_sigma)
+    
+        <span style="color: #008800; font-weight: bold">return</span> dr1_prob <span style="color: #333333">*</span> dt_prob <span style="color: #333333">*</span> dr2_prob
+    
+    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">prediction_step</span>(cur_odom, prev_odom):
+        <span style="color: #DD4422">&quot;&quot;&quot; Prediction step of the Bayes Filter.</span>
+    <span style="color: #DD4422">    Update the probabilities in loc.bel_bar based on loc.bel from the previous time step and the odometry motion model.</span>
+    
+    <span style="color: #DD4422">    Args:</span>
+    <span style="color: #DD4422">        cur_odom  ([Pose]): Current Pose</span>
+    <span style="color: #DD4422">        prev_odom ([Pose]): Previous Pose</span>
+    <span style="color: #DD4422">    &quot;&quot;&quot;</span>
+        <span style="color: #888888">#loop x_t</span>
+        u <span style="color: #333333">=</span> compute_control(cur_odom, prev_odom)
+        <span style="color: #008800; font-weight: bold">for</span> x_i, x_a <span style="color: #000000; font-weight: bold">in</span> <span style="color: #007020">enumerate</span>(loc<span style="color: #333333">.</span>bel_bar):
+            <span style="color: #008800; font-weight: bold">for</span> y_i, y_a <span style="color: #000000; font-weight: bold">in</span> <span style="color: #007020">enumerate</span>(x_a):
+                <span style="color: #008800; font-weight: bold">for</span> th_i, b_t <span style="color: #000000; font-weight: bold">in</span> <span style="color: #007020">enumerate</span>(y_a):
+                    sum_probs <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>
+                    <span style="color: #888888">#loop x_t-1</span>
+                    <span style="color: #008800; font-weight: bold">for</span> x_ind, x_arr <span style="color: #000000; font-weight: bold">in</span> <span style="color: #007020">enumerate</span>(loc<span style="color: #333333">.</span>bel):
+                        <span style="color: #008800; font-weight: bold">for</span> y_ind, y_arr <span style="color: #000000; font-weight: bold">in</span> <span style="color: #007020">enumerate</span>(x_arr):
+                            <span style="color: #008800; font-weight: bold">for</span> th_ind, b_t1 <span style="color: #000000; font-weight: bold">in</span> <span style="color: #007020">enumerate</span>(y_arr):
+                                <span style="color: #008800; font-weight: bold">if</span> (b_t1 <span style="color: #333333">&lt;</span> <span style="color: #6600EE; font-weight: bold">0.05</span>):
+                                    <span style="color: #008800; font-weight: bold">continue</span>
+                                pose_t <span style="color: #333333">=</span> mapper<span style="color: #333333">.</span>from_map(x_i, y_i, th_i)
+                                pose_t1 <span style="color: #333333">=</span> mapper<span style="color: #333333">.</span>from_map(x_ind, y_ind, th_ind)
+    
+                                prob_xt <span style="color: #333333">=</span> odom_motion_model(pose_t1, pose_t, u)
+                                p <span style="color: #333333">=</span> prob_xt <span style="color: #333333">*</span> b_t1
+                                sum_probs <span style="color: #333333">+=</span> p
+                    loc<span style="color: #333333">.</span>bel_bar[x_i, y_i, th_i] <span style="color: #333333">=</span> sum_probs
+                                
+            
+    
+    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">sensor_model</span>(pose):
+        <span style="color: #DD4422">&quot;&quot;&quot; This is the equivalent of p(z|x).</span>
+    
+    
+    <span style="color: #DD4422">    Args:</span>
+    <span style="color: #DD4422">        pose ([ndarray]): A Pose </span>
+    
+    <span style="color: #DD4422">    Returns:</span>
+    <span style="color: #DD4422">        [ndarray]: Returns a 1D array of size 18 (=loc.OBS_PER_CELL) with the likelihoods of each individual sensor measurement</span>
+    <span style="color: #DD4422">    &quot;&quot;&quot;</span>
+        views <span style="color: #333333">=</span> mapper<span style="color: #333333">.</span>get_views(pose[<span style="color: #0000DD; font-weight: bold">0</span>],pose[<span style="color: #0000DD; font-weight: bold">1</span>],pose[<span style="color: #0000DD; font-weight: bold">2</span>])
+        <span style="color: #888888"># prob_array = loc.gaussian(loc.obs_range_data[:,0], views, loc.sensor_sigma)</span>
+        prob_array <span style="color: #333333">=</span> np<span style="color: #333333">.</span>zeros(<span style="color: #0000DD; font-weight: bold">18</span>)
+        <span style="color: #008800; font-weight: bold">for</span> i, ob <span style="color: #000000; font-weight: bold">in</span> <span style="color: #007020">enumerate</span>(loc<span style="color: #333333">.</span>obs_range_data[:,<span style="color: #0000DD; font-weight: bold">0</span>]):
+            <span style="color: #888888"># print(&quot;ob, views:&quot;, ob, views[i])</span>
+            prob_array[i] <span style="color: #333333">=</span> loc<span style="color: #333333">.</span>gaussian(ob, views[i], loc<span style="color: #333333">.</span>sensor_sigma)
+            <span style="color: #888888"># print (prob_array[i])</span>
+        <span style="color: #008800; font-weight: bold">return</span> prob_array <span style="color: #333333">*</span> <span style="color: #6600EE; font-weight: bold">1e8</span>
+    
+    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">update_step</span>():
+        <span style="color: #DD4422">&quot;&quot;&quot; Update step of the Bayes Filter.</span>
+    <span style="color: #DD4422">    Update the probabilities in loc.bel based on loc.bel_bar and the sensor model.</span>
+    <span style="color: #DD4422">    &quot;&quot;&quot;</span>
+        <span style="color: #008800; font-weight: bold">for</span> x_ind, x_arr <span style="color: #000000; font-weight: bold">in</span> <span style="color: #007020">enumerate</span>(loc<span style="color: #333333">.</span>bel_bar):
+            <span style="color: #008800; font-weight: bold">for</span> y_ind, y_arr <span style="color: #000000; font-weight: bold">in</span> <span style="color: #007020">enumerate</span>(x_arr):
+                <span style="color: #008800; font-weight: bold">for</span> th_ind, bel_b <span style="color: #000000; font-weight: bold">in</span> <span style="color: #007020">enumerate</span>(y_arr):
+                    sensor_mod <span style="color: #333333">=</span> sensor_model(np<span style="color: #333333">.</span>array([x_ind, y_ind, th_ind]))
+                    loc<span style="color: #333333">.</span>bel[x_ind, y_ind, th_ind] <span style="color: #333333">=</span> np<span style="color: #333333">.</span>prod(sensor_mod) <span style="color: #333333">*</span> bel_b
+        loc<span style="color: #333333">.</span>bel <span style="color: #333333">=</span> loc<span style="color: #333333">.</span>bel <span style="color: #333333">/</span> np<span style="color: #333333">.</span>sum(loc<span style="color: #333333">.</span>bel)
+        
+    </pre></div>
+
         <p>
             Above is all of the code I implemented for this lab. The functions prediction_step and update_step are called after each time step executed in the robot's preset trajectory. They use odometry and sensor data respectively to form a belief of the robot's
             state. The remaining functions are helpers used in the calculation of belief. More details below.
         </p>
         <h3>Prediction Step:</h3>
+        <img width="500" src="lab content/lab 11 content/sumo_prediction_step.png">
         <p>
-            Here I fill the bel_bar array with probabilities corresponding to how likely the robot is to be in a certain position given ...
+            Here I fill the Localization class's bel_bar array with probabilities corresponding to how likely the robot is to be in a certain position given odometry data. The odometry data is obtained from the provided Commander class via the provided Trajectory
+            class, and is a single pose representing the robot's belief of where it is based purely on it's initial position and control signals. This is similar to using the IMU or integrating the motor drive on a physical robot to estimate the position.
+            These estimates are non-probabilistic and tend to quickly become inaccurate as errors accrue. The odometry for the robot's pose before and after moving is used to compute an estimate for the movement of the robot over the time step using the
+            function compute_control. Then, this estimate is used in estimating the probability that the robot is currently in each possible state in the map. For each possible current pose, the code iterates over each possible previous pose and calculates
+            the probability that it moved from the previous to current pose given the estimated odometry motion. This probability calculation is accomplished with the odom_motion_model function, which uses a gaussian distribution to model the motion.
+            These probabilities are multiplied by the chance the robot was in the previous pose to begin with (taken from the Localization bel array), and summed for each current pose. This probability multiplication is an application of Bayes formula.
+            This sum is stored in the Localization class's 3D bel_bar array, with the array index corresponding to the location of the of the current pose in the map in [x,y,theta] format. Thus the probability of the robot being in every pose in the map
+            is calculated based on odometry and stored in bel_bar.
         </p>
         <h3>Update Step:</h3>
+        <img width="500" src="lab content/lab 11 content/sudo_update_step.png">
+        <p>
+            Next, sensor data is applied to the current pose probabilities in the bel_bar array to create a more informed estimate of the robot's probable current states. At every time step the robot turns 360 degrees while taking 18 TOF measurements. Then every
+            state in bel_bar is cycled over, and the probability that the robot is in every possible state given those distance measurements is computed. This is done with the sensor_model helper function, which samples each observed distance measurements
+            from a gaussian centered at pre-cached measurements expected for the pose in question. The probability of obtaining the observed measurements from the pose is taken as the product of these gaussian samples. Then Bayes formula is applied by
+            multiplying the obtained probability for each state by the bel_bar pose probabilities to obtain more updated current pose probabilities. These are normalized and saved in the Localization class bel array. Note: In my implementation I was having
+            underflow issues causing some loss of accuracy, so I multiplied all sensor_model values by 10^8. This factor helps in computation but is eliminated by normalization at the end.
+        </p>
         <h3>Result:</h3>
-        <img width="500" src="lab content/lab 10 content/simulator.png">
-
-
-        <h4>Simulator GUI at initial position:</h4>
-        <p>The small grey rectangle is the robot and the line protruding from it represents it's front TOF beam.</p>
-        <h3>
-            Open Loop Control:
-        </h3>
-        <p>
-            For this part of the lab, I designed a simple procedural algorithm to make the simulated robot move in a square pattern. At each corner of the square I plotted odometry and ground truth data. The procedure was to move straight at 1 m/s for 0.5 seconds,
-            then stop and turn at 1rad/s for approximately pi/2 seconds. This was repeated four times, once for each edge of the square. Below is my procedural code, a screen recording of the simulated car moving, and the plotter output it generated.
-        </p>
-        <h4>
-            Code for open loop control:
-        </h4>
-        <!-- HTML generated using hilite.me -->
-        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">plot_pose</span>():
-            pose, gt_pose <span style="color: #333333">=</span> cmdr<span style="color: #333333">.</span>get_pose()
-            cmdr<span style="color: #333333">.</span>plot_odom(pose[<span style="color: #0000DD; font-weight: bold">0</span>], pose[<span style="color: #0000DD; font-weight: bold">1</span>])
-            cmdr<span style="color: #333333">.</span>plot_gt(gt_pose[<span style="color: #0000DD; font-weight: bold">0</span>], gt_pose[<span style="color: #0000DD; font-weight: bold">1</span>])
-
-        cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #0000DD; font-weight: bold">1</span>,<span style="color: #0000DD; font-weight: bold">0</span>)
-        plot_pose()
-        await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #6600EE; font-weight: bold">0.5</span>)
-        cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #0000DD; font-weight: bold">0</span>,<span style="color: #0000DD; font-weight: bold">1</span>)
-        plot_pose()
-        await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #6600EE; font-weight: bold">1.6</span>)
-
-        cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #0000DD; font-weight: bold">1</span>,<span style="color: #0000DD; font-weight: bold">0</span>)
-        plot_pose()
-        await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #6600EE; font-weight: bold">0.5</span>)
-        cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #0000DD; font-weight: bold">0</span>,<span style="color: #0000DD; font-weight: bold">1</span>)
-        await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #6600EE; font-weight: bold">1.6</span>)
-
-        cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #0000DD; font-weight: bold">1</span>,<span style="color: #0000DD; font-weight: bold">0</span>)
-        plot_pose()
-        await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #6600EE; font-weight: bold">0.5</span>)
-        cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #0000DD; font-weight: bold">0</span>,<span style="color: #0000DD; font-weight: bold">1</span>)
-        plot_pose()
-        await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #6600EE; font-weight: bold">1.6</span>)
-
-        cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #0000DD; font-weight: bold">1</span>,<span style="color: #0000DD; font-weight: bold">0</span>)
-        plot_pose()
-        await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #6600EE; font-weight: bold">0.5</span>)
-        cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #0000DD; font-weight: bold">0</span>,<span style="color: #0000DD; font-weight: bold">1</span>)
-        plot_pose()
-        await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #6600EE; font-weight: bold">1.6</span>)
-        </pre></div>
-
-        <p>
-            The Commander set_vel(lin_v, ang_v) function moves the car for a theoretically infinite duration. It sets the linear and angular velocity to values lin_v in m/s and ang/v in rad/s and leaves the car in that state until the next time set_vel is called
-            or until the car hits a wall. In order to make the car move for a limited time, I used the asyncio sleep function between calls of set_vel.
-        </p>
-
-        <h4>Video of open loop motion:</h4>
+        <h4>Screen recording of localization in action:</h4>
         <video width="320" height="240" controls>
-            <source src="lab content/lab 10 content/open loop.mp4">
+            <source src="lab content/lab 11 content/localization.mp4">
             Your browser does not support the video tag.
         </video>
 
         <p>
-            The simulated robot moves imperfectly with slight inconsistencies in movement durations, despite the fact that each call to asyncio.sleep is identical for a given motion (turning or moving along an edge).
+            Localization was accomplished in approximately two minutes without long delays between movements, so the time complexity of the Bayes Filter is decent.
         </p>
 
-        <h3>Pose Plot 1: (green is ground truth, red is odometry)</h3>
-        <img width="500" src="lab content/lab 10 content/open_loop_pose.png">
-
-        <h3>Pose Plot 2: (same exact code as the first run)</h3>
-        <img width="500" src="lab content/lab 10 content/open loop 2.png">
+        <h4>Pose Plot (Red: odometry, Green: ground truth, Blue: belief)</h4>
+        <img width="500" src="lab content/lab 11 content/localization_no_cutoff2.png">
 
         <p>
-            From the pose plots, it is clear that the robot's odometry in red, which simulates IMU data, does not present an accurate depiction of where it actually is. True location is given in green as the ground truth. This inaccuracy is due to snowballing accumulation
-            of error in the integration needed to obtain position from IMU accelerometer and gyroscope data. Further, on multiple trials of the open loop control slightly different shapes were formed, likely due to inconsistencies in execution, especially
-            in the use of asyncio.sleep which is device specific.
-        </p>
-
-        <h3>Closed Loop Control:</h3>
-        <p>
-            The next step in the lab is to code closed loop control obstacle avoidance for the simulated robot. To do this I went through several iterations using the front TOF sensor as input. This input is accessed through the Commander get_sensor function. First,
-            I tried a simple algorithm where the robot would turn away from walls ahead in proportion to how close the wall is to the robot. The code was as below:
-        </p>
-
-        <h4>
-            Code for initial closed loop control:
-        </h4>
-
-        <!-- HTML generated using hilite.me -->
-        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #6600EE; font-weight: bold">0.5</span>, <span style="color: #0000DD; font-weight: bold">0</span>)
-
-            <span style="color: #008800; font-weight: bold">while</span> cmdr<span style="color: #333333">.</span>sim_is_running() <span style="color: #000000; font-weight: bold">and</span> cmdr<span style="color: #333333">.</span>plotter_is_running():
-            sensor_values <span style="color: #333333">=</span> cmdr<span style="color: #333333">.</span>get_sensor()
-            plot_pose()
-            <span style="color: #008800; font-weight: bold">if</span> sensor_values[<span style="color: #0000DD; font-weight: bold">0</span>] <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">1</span>:
-                cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #6600EE; font-weight: bold">0.5</span>, <span style="color: #0000DD; font-weight: bold">3</span><span style="color: #333333">-</span>sensor_values[<span style="color: #0000DD; font-weight: bold">0</span>])
-        </pre></div>
-
-        <p>
-            This worked decently well, but had one major flaw. The beam of the simulated front tof sensor is extremely narrow, far more narrow than the robot itself. With the above algorithm, the robot moved straight except for when it perceived a nearby wall. So
-            when using this control system, the beam could narrowly miss a wall which caused the robot to believe it had a safe path forward. Then the edge of the car would collide with an obstacle. To solve this, I decided the robot should oscillate
-            back and forth while moving and turn toward whichever direction showed a greater distance to an obstacle. That way, rather than glancing off of obstacles that are narrowly off center from it, it would oscillate towards them, see a small distance,
-            and turn away. Below is a the code used, a screen capture of this control system in action and a plot of the pose output.
-        </p>
-
-        <h4>
-            Code for final closed loop control:
-        </h4>
-        <!-- HTML generated using hilite.me -->
-        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">osc <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">2</span>
-        last_tof <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">1</span>
-
-        cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #6600EE; font-weight: bold">0.5</span>, <span style="color: #0000DD; font-weight: bold">0</span>)
-        
-        <span style="color: #008800; font-weight: bold">while</span> cmdr<span style="color: #333333">.</span>sim_is_running() <span style="color: #000000; font-weight: bold">and</span> cmdr<span style="color: #333333">.</span>plotter_is_running():
-            sensor_values <span style="color: #333333">=</span> cmdr<span style="color: #333333">.</span>get_sensor()
-            plot_pose()
-            <span style="color: #008800; font-weight: bold">if</span> sensor_values[<span style="color: #0000DD; font-weight: bold">0</span>] <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">1</span>:
-                cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #6600EE; font-weight: bold">0.5</span>, <span style="color: #0000DD; font-weight: bold">3</span><span style="color: #333333">-</span>sensor_values[<span style="color: #0000DD; font-weight: bold">0</span>])
-            <span style="color: #008800; font-weight: bold">elif</span> sensor_values[<span style="color: #0000DD; font-weight: bold">0</span>] <span style="color: #333333">&lt;</span> last_tof: 
-                cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #6600EE; font-weight: bold">0.5</span>, <span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">1</span><span style="color: #333333">*</span>osc)
-            <span style="color: #008800; font-weight: bold">else</span>:
-                cmdr<span style="color: #333333">.</span>set_vel(<span style="color: #6600EE; font-weight: bold">0.5</span>, osc)
-            osc <span style="color: #333333">*=</span> <span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">1</span>
-            last_tof <span style="color: #333333">=</span> sensor_values[<span style="color: #0000DD; font-weight: bold">0</span>]
-        </pre></div>
-
-
-        <p>
-            The functionality from the initial control code iteration is maintained because it was effective at avoiding walls when they were sensed nearby. However, rather than simply going straight when no walls are in front, the car searches for obstacles in its
-            path. The osc value switches back and forth, and at each oscillation the front sensor value is taken and stored. When there is a change the car tends to turn toward an obstacle, which is actually helpful in making the obstacle avoidance from
-            above work because the obstacle is sighted.
-        </p>
-
-        <h4>Video of closed loop motion:</h4>
-        <video width="320" height="240" controls>
-            <source src="lab content/lab 10 content/closed loop 0_5.mp4">
-            Your browser does not support the video tag.
-        </video>
-
-        <p>
-            Success! This was taken with a linear velocity of 0.5 m/s.
-        </p>
-
-        <h4>Pose Plot: (green is ground truth, red is odometry)</h4>
-        <img width="500" src="lab content/lab 10 content/closed loop 0_5.png">
-
-        <p>
-            From this plot it can be seen that the robot traversal of the maze was stable and covered all areas of the map.
-        </p>
-
-        <h3>Faster linear velocity:</h3>
-        <video width="320" height="240" controls>
-            <source src="lab content/lab 10 content/closed loop 0_5.mp4">
-            Your browser does not support the video tag.
-        </video>
-        <p>
-            This is the car moving at 0.75 m/s. It does a decent job avoiding obstacles but eventually collides due to not having time to turn away from a wall after sensing it late.
-        </p>
-        <h4>Pose Plot: </h4>
-        <img width="500" src="lab content/lab 10 content/closed loop 0_5.png">
-        <p>
-            The robot successfully traversed the whole map but eventually collided at a corner. To guarantee collision avoidance the control should be run at a speed of 0.5 m/s or less.
+            Success! The blue line (belief) follows the green line (ground truth) fairly closely, which implies that the Bayes filter was successful.
         </p>
 
 
