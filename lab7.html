@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Fast Robots Wiki</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="robot-car-icon.jpg">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+</head>
+
+<body>
+    <section class="page-header">
+        <h1 class="project-name">Fast Robots</h1>
+        <h2 class="project-tagline">Joseph Horwitz's Wiki for ECE 4960 Fast Robots Course</h2>
+        <a target="_blank" href="https://github.com/joeyhz/Fast-Robots" class="btn">View on GitHub</a>
+    </section>
+    <section class="main-content">
+        <h2>Lab 7 - Kalman Filter:</h2>
+        <p>
+            In this lab I implemented a Kalman filter for obtaining a faster and more accurate estimation of the robot's position. The KF incorporated the prior belief and motion of the robot with sensor data in a probabilistic model to find the robot's state.
+        </p>
+
+        <h3>Motion Model/Step Response:</h3>
+        <p>
+            To determine a valid motion model of the robot, I ran data collection on a motor step response and solved for matrix coefficients to be used in the model. Based on Newton's second law and the general equation for drag force, I estimated the motion model
+            to be of the form:
+        </p>
+        <img width="300" src="lab content/lab 7 content/motion_model.png">
+        <p>This yields the following state space equation:</p>
+        <img width="300" src="lab content/lab 7 content/state_space.png">
+        <p>
+            To calculate the drag and mass coefficients, I ran a motor step response by setting the motors to 90% drive (PWM of 96.5) for the span of 60 TOF measurements. Then, I calculated the drag using the steady state velocity and mass using the 90% rise time
+            according to the below formulas:
+        </p>
+        <img width="250" style="display:inline" src="lab content/lab 7 content/drag.png">
+        <img width="350" style="display:inline" src="lab content/lab 7 content/mass.png">
+        <p>
+            Below are plots of the motor input, position (by TOF data), and velocity (by differentiating TOF data) of the robot during the step response.
+        </p>
+        <img width="600" src="lab content/lab 7 content/step_response.png">
+        <p>
+            From this data, I found that the steady state velocity was 1800 mm/s and the 90% rise time was 0.79 s. Thus, using the formulas above I calculated the value of the mass coefficient to be 1.91x10^-4 and that of the drag coefficient to be 5.6x10^-4 when
+            normalizing the input u to 1. These values result in the following state space matrices:
+        </p>
+        <img width="500" src="lab content/lab 7 content/ab.jpg">
+        <p>All remaining motion model matrices (the C matrix and noise matrices) are the same as calculated in lecture and are as follows:</p>
+        <img width="500" src="lab content/lab 7 content/sig_c.jpg">
+
+        <h3>Implementing a Kalman Filter on Lab 6 data:</h3>
+        <p>
+            To sanity check my KF, I implemented it in Python and ran it on data collected during Lab 6. Below is my code to make that happen.
+        </p>
+
+        <!-- HTML generated using hilite.me -->
+        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">Delta_T <span style="color: #333333">=</span> time_stamps[<span style="color: #0000DD; font-weight: bold">3</span>]<span style="color: #333333">-</span>time_stamps[<span style="color: #0000DD; font-weight: bold">2</span>]
+        <span style="color: #888888"># taken from middle because more representative than first time step</span>
+
+        A <span style="color: #333333">=</span> np<span style="color: #333333">.</span>array([[<span style="color: #0000DD; font-weight: bold">0</span>,<span style="color: #0000DD; font-weight: bold">1</span>],[<span style="color: #0000DD; font-weight: bold">0</span>, <span style="color: #333333">-</span><span style="color: #6600EE; font-weight: bold">2.9</span>]])
+        B <span style="color: #333333">=</span> np<span style="color: #333333">.</span>array([[<span style="color: #0000DD; font-weight: bold">0</span>], [<span style="color: #0000DD; font-weight: bold">5235</span> <span style="color: #333333">/</span> <span style="color: #0000DD; font-weight: bold">1000</span>]])
+        C <span style="color: #333333">=</span> np<span style="color: #333333">.</span>array([[<span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">1</span>,<span style="color: #0000DD; font-weight: bold">0</span>]])
+
+        sigma_u <span style="color: #333333">=</span> np<span style="color: #333333">.</span>array([[<span style="color: #0000DD; font-weight: bold">100</span>, <span style="color: #0000DD; font-weight: bold">0</span>],[<span style="color: #0000DD; font-weight: bold">0</span>,<span style="color: #0000DD; font-weight: bold">100</span>]])
+        sigma_z <span style="color: #333333">=</span> np<span style="color: #333333">.</span>array([[<span style="color: #0000DD; font-weight: bold">400</span>]])
+
+        Ad <span style="color: #333333">=</span> np<span style="color: #333333">.</span>eye(<span style="color: #0000DD; font-weight: bold">2</span>) <span style="color: #333333">+</span> Delta_T <span style="color: #333333">*</span> A  
+        Bd <span style="color: #333333">=</span> Delta_T <span style="color: #333333">*</span> B
+
+
+        ARR_SIZE <span style="color: #333333">=</span> <span style="color: #007020">len</span>(tofs)
+
+        step_size <span style="color: #333333">=</span> <span style="color: #6600EE; font-weight: bold">43.5</span> <span style="color: #888888"># lab 6 final version max motor output percentage. Scales to 56.975 PWM.</span>
+
+        <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">kf</span>(mu,sigma,u,y):
+            <span style="color: #888888">#prediction</span>
+            mu_p <span style="color: #333333">=</span> Ad<span style="color: #333333">.</span>dot(mu) <span style="color: #333333">+</span> Bd<span style="color: #333333">.</span>dot(u) 
+            sigma_p <span style="color: #333333">=</span> Ad<span style="color: #333333">.</span>dot(sigma<span style="color: #333333">.</span>dot(Ad<span style="color: #333333">.</span>transpose())) <span style="color: #333333">+</span> sigma_u
+
+            <span style="color: #888888">#update</span>
+            y_m <span style="color: #333333">=</span> y<span style="color: #333333">-</span>C<span style="color: #333333">.</span>dot(mu_p)
+            sigma_m <span style="color: #333333">=</span> C<span style="color: #333333">.</span>dot(sigma_p<span style="color: #333333">.</span>dot(C<span style="color: #333333">.</span>transpose())) <span style="color: #333333">+</span> sigma_z
+            
+            kf_gain <span style="color: #333333">=</span> sigma_p<span style="color: #333333">.</span>dot(C<span style="color: #333333">.</span>transpose()<span style="color: #333333">.</span>dot(np<span style="color: #333333">.</span>linalg<span style="color: #333333">.</span>inv(sigma_m)))
+
+            mu <span style="color: #333333">=</span> mu_p <span style="color: #333333">+</span> kf_gain<span style="color: #333333">.</span>dot(y_m)    
+            sigma<span style="color: #333333">=</span>(np<span style="color: #333333">.</span>eye(<span style="color: #0000DD; font-weight: bold">2</span>)<span style="color: #333333">-</span>kf_gain<span style="color: #333333">.</span>dot(C))<span style="color: #333333">.</span>dot(sigma_p)
+            <span style="color: #008800; font-weight: bold">return</span> mu,sigma
+
+        <span style="color: #888888">#initial values</span>
+        kf_x <span style="color: #333333">=</span> np<span style="color: #333333">.</span>array([[<span style="color: #333333">-</span>tofs[<span style="color: #0000DD; font-weight: bold">0</span>]],[<span style="color: #0000DD; font-weight: bold">0</span>]])
+        sigma <span style="color: #333333">=</span> np<span style="color: #333333">.</span>array([[<span style="color: #0000DD; font-weight: bold">25</span>,<span style="color: #0000DD; font-weight: bold">0</span>],[<span style="color: #0000DD; font-weight: bold">0</span>,<span style="color: #0000DD; font-weight: bold">25</span>]])
+
+        kf_results <span style="color: #333333">=</span> []
+        <span style="color: #008800; font-weight: bold">for</span> i <span style="color: #000000; font-weight: bold">in</span> <span style="color: #007020">range</span>(ARR_SIZE):
+            kf_x, sigma <span style="color: #333333">=</span> kf(kf_x, 
+                            sigma, 
+                            [[motor_pcnts[i] <span style="color: #333333">/</span> step_size]], 
+                            np<span style="color: #333333">.</span>array([[tofs[i<span style="color: #333333">+</span><span style="color: #0000DD; font-weight: bold">1</span>]]]))
+            dist <span style="color: #333333">=</span> <span style="color: #333333">-</span>kf_x[<span style="color: #0000DD; font-weight: bold">0</span>,<span style="color: #0000DD; font-weight: bold">0</span>]
+            kf_results<span style="color: #333333">.</span>append(dist)
+        </pre></div>
+
+        <p>
+            The KF function is based on the one provided in our lab manual. It uses my motion model established above to predict the location of the robot, then fuses that prediction with sensor data in order to generate a new position and noise estimate for the
+            robot's state. This function is called iteratively on every TOF and motor drive value from Lab 6. My Lab 6 implementation only recorded motor percentages along with TOF values, so the arrays containing these values are corresponding and of
+            the same size. Running this KF simulation yielded the following data result:
+        </p>
+        <img width="600" src="lab content/lab 7 content/pid_vs_kf.png">
+        <p>
+            From these graphs, I inferred that the KF I implemented follows the TOF values fairly closely, but anticipates a faster approach based on the car's motion model. This is useful because it allows me to run the car at faster speeds, which the slow TOF measurements
+            can't keep up with, and the KF will account for this and give a more up to date position estimate.
+        </p>
+
+        <h3>Implementing a Kalman Filter on the robot:</h3>
+        <p>
+            Now, in order to put the KF to use, I translated the code to Arduino and ran it live on the robot while in motion. I used the Arduino BasicLinearAlgebra library for matrix operations and fed the position outcome of the KF into my preexisting PID function
+            from lab 6 for motor control. The code I used is as follows:
+        </p>
+
+        <h4>KF function:</h4>
+        <!-- HTML generated using hilite.me -->
+        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">///////KALMAN FILTER////</span>
+            Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">2</span>,<span style="color: #0000DD; font-weight: bold">2</span><span style="color: #333333">&gt;</span> A <span style="color: #333333">=</span> {<span style="color: #0000DD; font-weight: bold">0</span>, <span style="color: #0000DD; font-weight: bold">1</span>,
+            <span style="color: #0000DD; font-weight: bold">0</span>, <span style="color: #333333">-</span><span style="color: #6600EE; font-weight: bold">2.9</span>};  
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">2</span>,<span style="color: #0000DD; font-weight: bold">1</span><span style="color: #333333">&gt;</span> B <span style="color: #333333">=</span> {<span style="color: #0000DD; font-weight: bold">0</span>, <span style="color: #6600EE; font-weight: bold">5.235</span>};
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">1</span>,<span style="color: #0000DD; font-weight: bold">2</span><span style="color: #333333">&gt;</span> C <span style="color: #333333">=</span> {<span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">1</span>, <span style="color: #0000DD; font-weight: bold">0</span>};
+
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">2</span>,<span style="color: #0000DD; font-weight: bold">2</span><span style="color: #333333">&gt;</span> sigma_u <span style="color: #333333">=</span> {<span style="color: #0000DD; font-weight: bold">100</span>, <span style="color: #0000DD; font-weight: bold">0</span>,
+                <span style="color: #0000DD; font-weight: bold">0</span>, <span style="color: #0000DD; font-weight: bold">100</span>};
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">1</span><span style="color: #333333">&gt;</span> sigma_z <span style="color: #333333">=</span> {<span style="color: #0000DD; font-weight: bold">400</span>};
+
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">2</span>,<span style="color: #0000DD; font-weight: bold">2</span><span style="color: #333333">&gt;</span> I <span style="color: #333333">=</span> {<span style="color: #0000DD; font-weight: bold">1</span>, <span style="color: #0000DD; font-weight: bold">0</span>,
+        <span style="color: #0000DD; font-weight: bold">0</span>, <span style="color: #0000DD; font-weight: bold">1</span>};
+        
+        <span style="color: #557799">#define STEP_SIZE 43.5</span>
+
+        <span style="color: #333399; font-weight: bold">float</span> <span style="color: #0066BB; font-weight: bold">kf</span>(<span style="color: #333399; font-weight: bold">int</span> index, <span style="color: #333399; font-weight: bold">long</span> time_stamp, <span style="color: #333399; font-weight: bold">int</span> tof_dist){
+        <span style="color: #008800; font-weight: bold">if</span> (index <span style="color: #333333">==</span> <span style="color: #0000DD; font-weight: bold">0</span>){
+        <span style="color: #888888">//store initial values</span>
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">2</span>,<span style="color: #0000DD; font-weight: bold">1</span><span style="color: #333333">&gt;</span> mu <span style="color: #333333">=</span> {tof_dist, <span style="color: #0000DD; font-weight: bold">0</span>};
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">2</span>,<span style="color: #0000DD; font-weight: bold">2</span><span style="color: #333333">&gt;</span> sigma <span style="color: #333333">=</span> {<span style="color: #0000DD; font-weight: bold">25</span>,<span style="color: #0000DD; font-weight: bold">0</span>,
+                    <span style="color: #0000DD; font-weight: bold">0</span>, <span style="color: #0000DD; font-weight: bold">25</span>};
+        store_kf_data(index, mu, sigma);
+        <span style="color: #008800; font-weight: bold">return</span> mu(<span style="color: #0000DD; font-weight: bold">0</span>,<span style="color: #0000DD; font-weight: bold">0</span>);
+        }
+
+        <span style="color: #888888">// Get KF inputs for this iteration</span>
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">2</span>,<span style="color: #0000DD; font-weight: bold">1</span><span style="color: #333333">&gt;</span> mu <span style="color: #333333">=</span> kf_vals[index<span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">1</span>];
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">2</span>,<span style="color: #0000DD; font-weight: bold">2</span><span style="color: #333333">&gt;</span> sigma <span style="color: #333333">=</span> sigmas[index<span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">1</span>];
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">1</span>, <span style="color: #0000DD; font-weight: bold">1</span><span style="color: #333333">&gt;</span> u <span style="color: #333333">=</span> {motor_pcnts[index<span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">1</span>] <span style="color: #333333">/</span> STEP_SIZE};
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">1</span><span style="color: #333333">&gt;</span> y <span style="color: #333333">=</span> {tof_dist}; 
+        <span style="color: #333399; font-weight: bold">int</span> dt <span style="color: #333333">=</span> time_stamp <span style="color: #333333">-</span> times[index<span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">1</span>];
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">2</span>,<span style="color: #0000DD; font-weight: bold">2</span><span style="color: #333333">&gt;</span> Ad <span style="color: #333333">=</span> I <span style="color: #333333">+</span> A <span style="color: #333333">*</span> dt;
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">2</span>,<span style="color: #0000DD; font-weight: bold">1</span><span style="color: #333333">&gt;</span> Bd <span style="color: #333333">=</span> B <span style="color: #333333">*</span> dt;
+
+        <span style="color: #888888">//predict step</span>
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">2</span>,<span style="color: #0000DD; font-weight: bold">1</span><span style="color: #333333">&gt;</span> mu_p <span style="color: #333333">=</span> Ad <span style="color: #333333">*</span> mu <span style="color: #333333">+</span> Bd <span style="color: #333333">*</span> u;
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">2</span>,<span style="color: #0000DD; font-weight: bold">2</span><span style="color: #333333">&gt;</span> sigma_p <span style="color: #333333">=</span> Ad<span style="color: #333333">*</span>sigma<span style="color: #333333">*~</span>Ad <span style="color: #333333">+</span> sigma_u; 
+
+        <span style="color: #888888">//update step</span>
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">1</span><span style="color: #333333">&gt;</span> y_m <span style="color: #333333">=</span> y <span style="color: #333333">-</span> C <span style="color: #333333">*</span> mu_p;
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">1</span>,<span style="color: #0000DD; font-weight: bold">1</span><span style="color: #333333">&gt;</span> sigma_m <span style="color: #333333">=</span> C <span style="color: #333333">*</span> sigma_p <span style="color: #333333">*</span> <span style="color: #333333">~</span>C <span style="color: #333333">+</span> sigma_z;
+
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">1</span>,<span style="color: #0000DD; font-weight: bold">1</span><span style="color: #333333">&gt;</span> sigma_m_inv <span style="color: #333333">=</span> sigma_m;
+        Invert(sigma_m_inv);
+        Matrix<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">2</span>,<span style="color: #0000DD; font-weight: bold">1</span><span style="color: #333333">&gt;</span> kf_gain <span style="color: #333333">=</span> sigma_p <span style="color: #333333">*</span> <span style="color: #333333">~</span>C <span style="color: #333333">*</span> sigma_m_inv; 
+
+        <span style="color: #888888">//combine</span>
+        mu <span style="color: #333333">=</span> mu_p <span style="color: #333333">+</span> kf_gain <span style="color: #333333">*</span> y_m;
+        sigma <span style="color: #333333">=</span> (I <span style="color: #333333">-</span> kf_gain <span style="color: #333333">*</span> C) <span style="color: #333333">*</span> sigma_p;
+
+        store_kf_data(index, <span style="color: #333333">-</span>mu, sigma);
+        <span style="color: #008800; font-weight: bold">return</span> <span style="color: #333333">-</span>mu(<span style="color: #0000DD; font-weight: bold">0</span>,<span style="color: #0000DD; font-weight: bold">0</span>);
+        }
+        </pre></div>
+        <p>
+            The constant matrix coefficients are initialized at the top. The Kalman Filter relies on past TOF and motor percent values, so on the first function iteration it simply accepts the first TOF value as position, assumes velocity is 0, and establishes a
+            reasonable initial uncertainty. Then in future iterations the function establishes KF parameters specific to the current TOF data, previous KF state and previous motor input, predicts state with the motion model, updates with TOF data, and
+            returns current position. It returns current position for use by the PID controller in controlling the motors. KF position, velocity, and uncertainty are used in future iterations of the controller though and are saved using store_kf_data.
+        </p>
+
+        <h4>Outer loop logic:</h4>
+        <!-- HTML generated using hilite.me -->
+        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"> <span style="color: #008800; font-weight: bold">if</span>(sensor_data_ready() <span style="color: #333333">&amp;&amp;</span> measure_count <span style="color: #333333">&lt;</span> ARR_SIZE){
+            <span style="color: #888888">//Doing KF and just got new sensor reading</span>
+            curr_mil <span style="color: #333333">=</span> millis();
+            new_tof <span style="color: #333333">=</span> get_front_tof();
+            kf_state <span style="color: #333333">=</span> kf(measure_count, curr_mil, new_tof);
+            pcnt <span style="color: #333333">=</span> pid(measure_count, curr_mil, kf_state, new_tof);
+            
+            move_speed(pcnt);
+            measure_count <span style="color: #333333">++</span>;
+            }
+            <span style="color: #008800; font-weight: bold">else</span> <span style="color: #008800; font-weight: bold">if</span> (measure_count <span style="color: #333333">&gt;=</span> ARR_SIZE){
+            active_stop();
+            write_pid_data();
+            write_kf_data();
+            do_KF <span style="color: #333333">=</span> <span style="color: #007020">false</span>;
+            }
+            </pre></div>
+        <p>
+            The outer loop calls the KF function which fuses sensor data, information of prior motor execution, and prior KF belief to estimate robot position. This position is fed into the PID controller, which controls the motors and records the motor percentage
+            and TOF data. This happens for 100 cycles, at which point the KF position data, TOF readings, and motor percentages are written to BLE and sent to a lab computer for analysis. Below are graphs of the output from one run of the Kalman Filter.
+        </p>
+        <h4>KF Results:</h4>
+        <img width="600" src="lab content/lab 7 content/kf_robot.png">
+        <p>
+            The KF data was very close (but not identical) to the TOF data, which indicates that my Kalman Filter places a high level of a confidence in sensor values. However, the trial was a success, placing the robot 300mm away from the wall without collision.
+            It also was run using significantly more aggressive PID parameters and motor scaling than in lab 6 and ran far faster. See below video:
+        </p>
+
+        <h4>Video of KF Control for Task A:</h4>
+        <video width="320" height="240" controls>
+            <source src="lab content/lab 7 content/kf_video.mov">
+            Your browser does not support the video tag.
+        </video>
+
+
+    </section>
+
+</body>
+
+</html>
