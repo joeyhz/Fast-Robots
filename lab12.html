@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Fast Robots Wiki</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="robot-car-icon.jpg">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+</head>
+
+<body>
+    <section class="page-header">
+        <h1 class="project-name">Fast Robots</h1>
+        <h2 class="project-tagline">Joseph Horwitz's Wiki for ECE 4960 Fast Robots Course</h2>
+        <a target="_blank" href="https://github.com/joeyhz/Fast-Robots" class="btn">View on GitHub</a>
+    </section>
+    <section class="main-content">
+        <h2>Lab 12 - Localization on Robot</h2>
+
+        <p>
+            In this lab I ran a limited Bayes Filter localization on the physical robot. At this point the robot is still not moving by itself around the map. Instead, I placed the robot in four marked locations on the map, had it take measurements while rotating,
+            and ran the update step of the Bayes filter to estimate position based off of sensor data.
+        </p>
+        <h3>Simulated Localization:</h3>
+        <p>
+            Before attempting localization on the robot, I ran the Bayes filter provided by course staff on the FlatLand simulator in order to assure there are no issues. Below is the plotter output from that run:
+        </p>
+        <h3>Simulated Localization Plot (Red: odometry, Green: ground truth, Blue: belief)</h3>
+        <img width="500" src="lab content/lab 12 content/sim_plot.png">
+
+
+        <p>
+            Above is all of the code I implemented for this lab. The functions prediction_step and update_step are called after each time step executed in the robot's preset trajectory. They use odometry and sensor data respectively to form a belief of the robot's
+            state. The remaining functions are helpers used in the calculation of belief. More details below.
+        </p>
+        <h3>Prediction Step:</h3>
+        <img width="500" src="lab content/lab 11 content/sumo_prediction_step.png">
+        <p>
+            Here I fill the Localization class's bel_bar array with probabilities corresponding to how likely the robot is to be in a certain position given odometry data. The odometry data is obtained from the provided Commander class via the provided Trajectory
+            class, and is a single pose representing the robot's belief of where it is based purely on it's initial position and control signals. This is similar to using the IMU or integrating the motor drive on a physical robot to estimate the position.
+            These estimates are non-probabilistic and tend to quickly become inaccurate as errors accrue. The odometry for the robot's pose before and after moving is used to compute an estimate for the movement of the robot over the time step using the
+            function compute_control. Then, this estimate is used in estimating the probability that the robot is currently in each possible state in the map. For each possible current pose, the code iterates over each possible previous pose and calculates
+            the probability that it moved from the previous to current pose given the estimated odometry motion. This probability calculation is accomplished with the odom_motion_model function, which uses a gaussian distribution to model the motion.
+            These probabilities are multiplied by the chance the robot was in the previous pose to begin with (taken from the Localization bel array), and summed for each current pose. This probability multiplication is an application of Bayes formula.
+            This sum is stored in the Localization class's 3D bel_bar array, with the array index corresponding to the location of the of the current pose in the map in [x,y,theta] format. Thus the probability of the robot being in every pose in the map
+            is calculated based on odometry and stored in bel_bar.
+        </p>
+        <h3>Update Step:</h3>
+        <img width="500" src="lab content/lab 11 content/sudo_update_step.png">
+        <p>
+            Next, sensor data is applied to the current pose probabilities in the bel_bar array to create a more informed estimate of the robot's probable current states. At every time step the robot turns 360 degrees while taking 18 TOF measurements. Then every
+            state in bel_bar is cycled over, and the probability that the robot is in every possible state given those distance measurements is computed. This is done with the sensor_model helper function, which samples each observed distance measurements
+            from a gaussian centered at pre-cached measurements expected for the pose in question. The probability of obtaining the observed measurements from the pose is taken as the product of these gaussian samples. Then Bayes formula is applied by
+            multiplying the obtained probability for each state by the bel_bar pose probabilities to obtain more updated current pose probabilities. These are normalized and saved in the Localization class bel array. Note: In my implementation I was having
+            underflow issues causing some loss of accuracy, so I multiplied all sensor_model values by 10^8. This factor helps in computation but is eliminated by normalization at the end.
+        </p>
+        <h3>Result:</h3>
+        <h4>Screen recording of localization in action:</h4>
+        <video width="320" height="240" controls>
+            <source src="lab content/lab 11 content/localization.mp4">
+            Your browser does not support the video tag.
+        </video>
+
+        <p>
+            Localization was accomplished in approximately two minutes without long delays between movements, so the time complexity of the Bayes Filter is decent.
+        </p>
+
+        <h4>Pose Plot (Red: odometry, Green: ground truth, Blue: belief)</h4>
+        <img width="500" src="lab content/lab 11 content/localization_no_cutoff2.png">
+
+        <p>
+            Success! The blue line (belief) follows the green line (ground truth) fairly closely, which implies that the Bayes filter was successful.
+        </p>
+
+
+    </section>
+
+</body>
+
+</html>
