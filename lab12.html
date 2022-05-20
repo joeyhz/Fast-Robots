@@ -29,52 +29,77 @@
         <p>
             Before attempting localization on the robot, I ran the Bayes filter provided by course staff on the FlatLand simulator in order to assure there are no issues. Below is the plotter output from that run:
         </p>
-        <h3>Simulated Localization Plot (Red: odometry, Green: ground truth, Blue: belief)</h3>
+        <h4>Simulated Localization Plot (Red: odometry, Green: ground truth, Blue: belief)</h4>
         <img width="500" src="lab content/lab 12 content/sim_plot.png">
 
-
+        <h3>Observation Loop:</h3>
         <p>
-            Above is all of the code I implemented for this lab. The functions prediction_step and update_step are called after each time step executed in the robot's preset trajectory. They use odometry and sensor data respectively to form a belief of the robot's
-            state. The remaining functions are helpers used in the calculation of belief. More details below.
-        </p>
-        <h3>Prediction Step:</h3>
-        <img width="500" src="lab content/lab 11 content/sumo_prediction_step.png">
-        <p>
-            Here I fill the Localization class's bel_bar array with probabilities corresponding to how likely the robot is to be in a certain position given odometry data. The odometry data is obtained from the provided Commander class via the provided Trajectory
-            class, and is a single pose representing the robot's belief of where it is based purely on it's initial position and control signals. This is similar to using the IMU or integrating the motor drive on a physical robot to estimate the position.
-            These estimates are non-probabilistic and tend to quickly become inaccurate as errors accrue. The odometry for the robot's pose before and after moving is used to compute an estimate for the movement of the robot over the time step using the
-            function compute_control. Then, this estimate is used in estimating the probability that the robot is currently in each possible state in the map. For each possible current pose, the code iterates over each possible previous pose and calculates
-            the probability that it moved from the previous to current pose given the estimated odometry motion. This probability calculation is accomplished with the odom_motion_model function, which uses a gaussian distribution to model the motion.
-            These probabilities are multiplied by the chance the robot was in the previous pose to begin with (taken from the Localization bel array), and summed for each current pose. This probability multiplication is an application of Bayes formula.
-            This sum is stored in the Localization class's 3D bel_bar array, with the array index corresponding to the location of the of the current pose in the map in [x,y,theta] format. Thus the probability of the robot being in every pose in the map
-            is calculated based on odometry and stored in bel_bar.
-        </p>
-        <h3>Update Step:</h3>
-        <img width="500" src="lab content/lab 11 content/sudo_update_step.png">
-        <p>
-            Next, sensor data is applied to the current pose probabilities in the bel_bar array to create a more informed estimate of the robot's probable current states. At every time step the robot turns 360 degrees while taking 18 TOF measurements. Then every
-            state in bel_bar is cycled over, and the probability that the robot is in every possible state given those distance measurements is computed. This is done with the sensor_model helper function, which samples each observed distance measurements
-            from a gaussian centered at pre-cached measurements expected for the pose in question. The probability of obtaining the observed measurements from the pose is taken as the product of these gaussian samples. Then Bayes formula is applied by
-            multiplying the obtained probability for each state by the bel_bar pose probabilities to obtain more updated current pose probabilities. These are normalized and saved in the Localization class bel array. Note: In my implementation I was having
-            underflow issues causing some loss of accuracy, so I multiplied all sensor_model values by 10^8. This factor helps in computation but is eliminated by normalization at the end.
-        </p>
-        <h3>Result:</h3>
-        <h4>Screen recording of localization in action:</h4>
-        <video width="320" height="240" controls>
-            <source src="lab content/lab 11 content/localization.mp4">
-            Your browser does not support the video tag.
-        </video>
-
-        <p>
-            Localization was accomplished in approximately two minutes without long delays between movements, so the time complexity of the Bayes Filter is decent.
+            I used the same observation loop as in Lab 9, but adjusted the PID controller so that it would turn 20 degrees per observation rather than 24 degrees. Then I could collect 18 independent TOF observations instead of 15 readings like in Lab 9. The Python
+            code used to collect and process the observation data is below:
         </p>
 
-        <h4>Pose Plot (Red: odometry, Green: ground truth, Blue: belief)</h4>
-        <img width="500" src="lab content/lab 11 content/localization_no_cutoff2.png">
+        <h4>Code to Perform Observation Loop</h4>
+        <!-- HTML generated using hilite.me -->
+        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">perform_observation_loop</span>(<span style="color: #007020">self</span>, rot_vel<span style="color: #333333">=</span><span style="color: #0000DD; font-weight: bold">120</span>):
+        <span style="color: #888888"># Initialize my custom robot controller class</span>
+        rc <span style="color: #333333">=</span> RobotControl(ble)
+
+        <span style="color: #888888"># Spin in place with PWM = 95, collecting sensor data</span>
+        rc<span style="color: #333333">.</span>spin_360(<span style="color: #0000DD; font-weight: bold">95</span>)
+
+        <span style="color: #888888"># We need to explicitly stop recording data after it stops spinning</span>
+        <span style="color: #008800; font-weight: bold">while</span> rc<span style="color: #333333">.</span>sensor_readings <span style="color: #000000; font-weight: bold">is</span> <span style="color: #007020">None</span> <span style="color: #000000; font-weight: bold">or</span> <span style="color: #007020">len</span>(rc<span style="color: #333333">.</span>sensor_readings) <span style="color: #333333">&lt;=</span> <span style="color: #0000DD; font-weight: bold">18</span>:
+            asyncio<span style="color: #333333">.</span>run(asyncio<span style="color: #333333">.</span>sleep(<span style="color: #6600EE; font-weight: bold">0.05</span>))
+        rc<span style="color: #333333">.</span>stop_recording()
+
+        <span style="color: #888888"># Display the full sensor data</span>
+        cols <span style="color: #333333">=</span> [
+            <span style="background-color: #fff0f0">&quot;time&quot;</span>, <span style="background-color: #fff0f0">&quot;dist_r&quot;</span>, <span style="background-color: #fff0f0">&quot;dist_f&quot;</span>, <span style="background-color: #fff0f0">&quot;acc_x&quot;</span>, <span style="background-color: #fff0f0">&quot;acc_y&quot;</span>, <span style="background-color: #fff0f0">&quot;acc_z&quot;</span>, <span style="background-color: #fff0f0">&quot;gyr_x&quot;</span>,
+            <span style="background-color: #fff0f0">&quot;gyr_y&quot;</span>, <span style="background-color: #fff0f0">&quot;gyr_z&quot;</span>, <span style="background-color: #fff0f0">&quot;mag_x&quot;</span>, <span style="background-color: #fff0f0">&quot;mag_y&quot;</span>, <span style="background-color: #fff0f0">&quot;mag_z&quot;</span>, <span style="background-color: #fff0f0">&quot;temp&quot;</span>
+        ]
+        sensor_data <span style="color: #333333">=</span> pd<span style="color: #333333">.</span>DataFrame(rc<span style="color: #333333">.</span>sensor_arr, columns<span style="color: #333333">=</span>cols)
+
+        <span style="color: #888888"># We only really care about the front ToF data though:</span>
+        sensor_ranges <span style="color: #333333">=</span> (np<span style="color: #333333">.</span>flip(sensor_data[<span style="background-color: #fff0f0">&quot;dist_f&quot;</span>][:<span style="color: #0000DD; font-weight: bold">18</span>]<span style="color: #333333">.</span>to_numpy()))[np<span style="color: #333333">.</span>newaxis]<span style="color: #333333">.</span>T
+
+        <span style="color: #888888"># Convert millimeters to meters</span>
+        sensor_ranges <span style="color: #333333">/=</span> <span style="color: #0000DD; font-weight: bold">1000</span>
+
+        <span style="color: #008800; font-weight: bold">return</span> sensor_ranges, sensor_ranges  <span style="color: #888888"># We don&#39;t care about the second value</span>
+        </pre></div>
+
+
+        <h3>Localization:</h3>
+        <p>
+            This lab does not use the car's motors so odometry does not come into play. Therefore the prediction step is meaningless. I used exclusively the update step at each of four points to localize. This update step is identical to the one written in lab 11.
+            Below are plots for the Belief given by the update step for each point:
+        </p>
+        <h5>
+            The blue dots represent the belief and the green circle surrounds the location the car was placed.
+        </h5>
+        <h4>Point 1: (-3 ft, -2 ft, 0 deg)</h4>
+        <img width="500" src="lab content/lab 12 content/neg3neg2.png">
+
+        <h4>Point 2: (0 ft ,3 ft, 0 deg)</h4>
+        <img width="500" src="lab content/lab 12 content/03.png">
+
+        <h4>Point 3: (5 ft, -3 ft, 0 deg)</h4>
+        <img width="500" src="lab content/lab 12 content/5neg3.png">
+
+        <h4>Point 4: (5 ft, 3 ft, 0 deg)</h4>
+        <img width="500" src="lab content/lab 12 content/53.png">
 
         <p>
-            Success! The blue line (belief) follows the green line (ground truth) fairly closely, which implies that the Bayes filter was successful.
+            Orientation is not displayed in these plots but in each case it was near the correct value of zero degrees.
         </p>
+
+        <h3>Conclusion:</h3>
+        <p>
+            In general localization was imperfect but came somewhat close. The exception is point 4, in which case localization was on the dot. The inaccuracies are likely due to error in the 20 degree rotations between observations and sensor noise.
+        </p>
+
+        <h3>Note:</h3>
+        <footer>I worked with David Kim (jk2537) on this lab</footer>
 
 
     </section>
