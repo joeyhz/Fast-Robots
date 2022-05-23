@@ -28,86 +28,139 @@
         https://www.youtube.com/watch?v=hYqq_7ihHmY&t=78s
         <h3>Strategy:</h3>
         <p>
-            Our logic for executing the
+            To successfully complete this lab the robot needed to move through the following waypoints, given in feet from the center of the map.
+            <ol>
+                <li>(-4, -3) start</li>
+                <li>(-2, -1)</li>
+                <li>(1, -1)</li>
+                <li>4. (2, -3)</li>
+                <li>5. (5, -3)</li>
+                <li>6. (5, -2) </li>
+                <li>7. (5, 3) </li>
+                <li>8. (0, 3) </li>
+                <li>9. (0, 0) end </li>
+            </ol>
+        </p>
+
+        <p>Here is what that looks like on the map:</p>
+        <h4>Waypoint Trajectory:</h4>
+        <img width="500" src="lab content/lab 13 content/Trajectory.png">
+
+        <p>
+            The logic used for moving from waypoint to waypoint is as follows. First, localization is executed to gather a pose estimate for the current state of the robot. If the robot is projected to be within one grid cell distance of the next waypoint then the
+            next waypoint is incremented. If it is on the final waypoint then the control loop breaks and the robot does nothing. Otherwise, a rotation-translation-rotation control is formulated to move the robot from its current pose estimate to the
+            next waypoint. This control is scaled to a motor PWM and duration command which is calibrated to match the degree and meter control outputs. Then when the motion command finishes, localization is run again and the cycle repeats. However, this
+            only works if the robot encounters no obstacles while moving. If it encounters an obstacle, then a local obstacle avoidance planner takes over and uses right wall following until the obstacle is passed. At that point localization is run again
+            and the cycle continues.
+        </p>
+        <h4>Code for Outer Logic:</h4>
+        <!-- HTML generated using hilite.me -->
+        <!-- HTML generated using hilite.me -->
+        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">
+<span style="color: #888888"># Run through each motion steps</span>
+i <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>
+<span style="color: #008800; font-weight: bold">while</span> <span style="color: #007020">True</span>:
+    
+    <span style="color: #333333">...</span> Localization <span style="color: #333333">...</span>
+    
+    <span style="color: #888888"># Check if we reached a waypoint</span>
+    x, y, _ <span style="color: #333333">=</span> argmax_bel[<span style="color: #0000DD; font-weight: bold">0</span>]
+    way_x <span style="color: #333333">=</span> waypoints[i][<span style="color: #0000DD; font-weight: bold">0</span>]
+    way_y <span style="color: #333333">=</span> waypoints[i][<span style="color: #0000DD; font-weight: bold">1</span>]
+    <span style="color: #008800; font-weight: bold">if</span> way_x <span style="color: #333333">-</span> <span style="color: #0000DD; font-weight: bold">1</span> <span style="color: #333333">&lt;=</span> x <span style="color: #333333">&lt;=</span> way_x <span style="color: #333333">+</span> <span style="color: #0000DD; font-weight: bold">1</span> <span style="color: #000000; font-weight: bold">and</span> way_y <span style="color: #333333">-</span> <span style="color: #0000DD; font-weight: bold">1</span> <span style="color: #333333">&lt;=</span> y <span style="color: #333333">&lt;=</span> way_y <span style="color: #333333">+</span> <span style="color: #0000DD; font-weight: bold">1</span>:
+        i <span style="color: #333333">+=</span> <span style="color: #0000DD; font-weight: bold">1</span>
+        <span style="color: #008800; font-weight: bold">print</span>(f<span style="background-color: #fff0f0">&quot;New goal waypoint {i}&quot;</span>)
+    
+    <span style="color: #888888"># Termination condition</span>
+    <span style="color: #008800; font-weight: bold">if</span> i <span style="color: #333333">==</span> <span style="color: #007020">len</span>(waypoints):
+        <span style="color: #008800; font-weight: bold">break</span>
+    
+    <span style="color: #888888"># Compute the necessary control to get to the next waypoint (assuming no obstacles)</span>
+    delta_rot_1, delta_trans, delta_rot_2 <span style="color: #333333">=</span> loc<span style="color: #333333">.</span>compute_control(waypoints_in_m[i], current_belief)
+    speed_rot_1, time_rot_1 <span style="color: #333333">=</span> rot_delta_to_pwm(delta_rot_1, boost)
+    speed_trans, time_trans <span style="color: #333333">=</span> trans_delta_to_pwm(delta_trans)
+    speed_rot_2, time_rot_2 <span style="color: #333333">=</span> rot_delta_to_pwm(delta_rot_2, boost)
+    
+    <span style="color: #888888"># Invoke motor inputs...</span>
+    <span style="color: #888888"># First rotation:</span>
+    <span style="color: #008800; font-weight: bold">if</span> time_rot_1 <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">0</span>:
+        rc<span style="color: #333333">.</span>rotate_right(speed_rot_1)
+    <span style="color: #008800; font-weight: bold">else</span>:
+        rc<span style="color: #333333">.</span>rotate_left(speed_rot_1)
+    await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #007020">abs</span>(time_rot_1))
+    rc<span style="color: #333333">.</span>active_stop()
+    
+    await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #0000DD; font-weight: bold">1</span>)
+    
+    <span style="color: #888888"># Try to move forward with the forward controls.</span>
+    <span style="color: #888888"># If there are obstacles, scrap the rest of the control and try again with new localization data.</span>
+    obstacles_avoided <span style="color: #333333">=</span> execute_safe_trajectory(speed_trans, time_trans)
+    <span style="color: #008800; font-weight: bold">if</span> obstacles_avoided:
+        <span style="color: #008800; font-weight: bold">continue</span>
+    
+    await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #0000DD; font-weight: bold">1</span>)
+    
+    <span style="color: #888888"># Otherwise... continue with the second rotation</span>
+    <span style="color: #008800; font-weight: bold">if</span> time_rot_2 <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">0</span>:
+        rc<span style="color: #333333">.</span>rotate_right(speed_rot_2)
+    <span style="color: #008800; font-weight: bold">else</span>:
+        rc<span style="color: #333333">.</span>rotate_left(speed_rot_2)
+    await asyncio<span style="color: #333333">.</span>sleep(<span style="color: #007020">abs</span>(time_rot_2))
+    rc<span style="color: #333333">.</span>active_stop()
+</pre></div>
+
+
+        <p>
+            "execute_safe_trajectory" moves the car at a given PWM for a given duration, unless it sees an obstacle, in which case obstacle avoidance takes over and then the function returns.<br><br> There are 1 second pauses between movements to kill
+            momentum and make movements more stable.
         </p>
 
         <h3>Localization:</h3>
+        <p>
+            At first, we tried doing localization with only the update step as in lab 12. However, I quickly became frustrated with the robot's willingness to believe itself in a totally different corner of the map after a small inaccuracy in its observation loop
+            or when localizing in an indistinctive grid cell. I decided that, even with a highly imperfect odometry or motion model, it would be beneficial to provide a loose prediction step to give the robot a hint to its general location before it runs
+            the observation loop. Thus, I implemented a loose prediction step using the assumption that the robot just successfully moved from one waypoint to the next. This is clearly not a reliable assumption, but by giving the robot waypoints as a
+            prediction I get a bel_bar matrix which is biased towards areas the robot could possibly be if the trajectory hasn't already completely failed, and the update step can then be used to localize for the actual pose of the car.
+        </p>
+        <h4>Code for Localization:</h4>
+        <!-- HTML generated using hilite.me -->
+        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">    <span style="color: #888888"># Prediction Step</span>
+    current_odom <span style="color: #333333">=</span> waypoints[i]
+    prev_odom <span style="color: #333333">=</span> waypoints[<span style="color: #0000DD; font-weight: bold">0</span>] <span style="color: #008800; font-weight: bold">if</span> i <span style="color: #333333">==</span> <span style="color: #0000DD; font-weight: bold">0</span> <span style="color: #008800; font-weight: bold">else</span> waypoints[i <span style="color: #333333">-</span> <span style="color: #0000DD; font-weight: bold">1</span>]
+    loc<span style="color: #333333">.</span>prediction_step(current_odom, prev_odom)
+    
+    <span style="color: #888888"># Get Observation Data by executing a 360 degree rotation motion</span>
+    loc<span style="color: #333333">.</span>get_observation_data()
+
+    <span style="color: #888888"># Run Update Step</span>
+    loc<span style="color: #333333">.</span>update_step()
+    loc<span style="color: #333333">.</span>plot_update_step_data(plot_data<span style="color: #333333">=</span><span style="color: #007020">True</span>)
+    argmax_bel <span style="color: #333333">=</span> get_max(loc<span style="color: #333333">.</span>bel)
+    current_belief <span style="color: #333333">=</span> loc<span style="color: #333333">.</span>mapper<span style="color: #333333">.</span>from_map(<span style="color: #333333">*</span>argmax_bel[<span style="color: #0000DD; font-weight: bold">0</span>])
+</pre></div>
+        <p>"waypoints" is an array of poses (in grid cell indexes) starting at (-2ft, -1ft, -180deg), with waypoints[i] representing the next waypoint destination for the robot. The angle in each pose was manually assigned. <br><br> "loc.prediction_step"
+            creates a bel_bar matrix based on a move from one pose to another as in lab 11.<br><br> "loc.update_step" runs an observation loop collecting 18 distance measurements and comparing them to pre-cached values with a Bayes Filter, as in labs
+            11 and 12.
+        </p>
 
         <h3>Control:</h3>
+        <p>
+            To move the robot we used an open loop motor scaling function to convert distances and angles to motor inputs. I started with controlling duration as a linear function of time. This worked well for turning, but not for translation because the car did
+            not move linearly at a constant pace, but rather accelerated continuously as motor input was applied due to Newton's second law. This made longer inputs lead to greater speeds and thus proportionally farther distances. To deal with this, I
+            used a square root scaling function, which approximated a second derivative on the quadratic duration-to-time relationship. This proved far more effective and lead to reasonable translations for both long and short distances.
+        </p>
 
         <h3>Result:</h3>
-
-        <h3>Conclusion:</h3>
+        <h3>Video of run with localization plot in corner:</h3>
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/hYqq_7ihHmY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
         <p>
-            Before attempting localization on the robot, I ran the Bayes filter provided by course staff on the FlatLand simulator in order to assure there are no issues. Below is the plotter output from that run:
-        </p>
-        <h4>Simulated Localization Plot (Red: odometry, Green: ground truth, Blue: belief)</h4>
-        <img width="500" src="lab content/lab 12 content/sim_plot.png">
-
-        <h3>Observation Loop:</h3>
-        <p>
-            I used the same observation loop as in Lab 9, but adjusted the PID controller so that it would turn 20 degrees per observation rather than 24 degrees. Then I could collect 18 independent TOF observations instead of 15 readings like in Lab 9. The Python
-            code used to collect and process the observation data is below:
-        </p>
-
-        <h4>Code to Perform Observation Loop</h4>
-        <!-- HTML generated using hilite.me -->
-        <div style="background: #ffffff; overflow:auto;width:auto;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">perform_observation_loop</span>(<span style="color: #007020">self</span>, rot_vel<span style="color: #333333">=</span><span style="color: #0000DD; font-weight: bold">120</span>):
-        <span style="color: #888888"># Initialize my custom robot controller class</span>
-        rc <span style="color: #333333">=</span> RobotControl(ble)
-
-        <span style="color: #888888"># Spin in place with PWM = 95, collecting sensor data</span>
-        rc<span style="color: #333333">.</span>spin_360(<span style="color: #0000DD; font-weight: bold">95</span>)
-
-        <span style="color: #888888"># We need to explicitly stop recording data after it stops spinning</span>
-        <span style="color: #008800; font-weight: bold">while</span> rc<span style="color: #333333">.</span>sensor_readings <span style="color: #000000; font-weight: bold">is</span> <span style="color: #007020">None</span> <span style="color: #000000; font-weight: bold">or</span> <span style="color: #007020">len</span>(rc<span style="color: #333333">.</span>sensor_readings) <span style="color: #333333">&lt;=</span> <span style="color: #0000DD; font-weight: bold">18</span>:
-            asyncio<span style="color: #333333">.</span>run(asyncio<span style="color: #333333">.</span>sleep(<span style="color: #6600EE; font-weight: bold">0.05</span>))
-        rc<span style="color: #333333">.</span>stop_recording()
-
-        <span style="color: #888888"># Display the full sensor data</span>
-        cols <span style="color: #333333">=</span> [
-            <span style="background-color: #fff0f0">&quot;time&quot;</span>, <span style="background-color: #fff0f0">&quot;dist_r&quot;</span>, <span style="background-color: #fff0f0">&quot;dist_f&quot;</span>, <span style="background-color: #fff0f0">&quot;acc_x&quot;</span>, <span style="background-color: #fff0f0">&quot;acc_y&quot;</span>, <span style="background-color: #fff0f0">&quot;acc_z&quot;</span>, <span style="background-color: #fff0f0">&quot;gyr_x&quot;</span>,
-            <span style="background-color: #fff0f0">&quot;gyr_y&quot;</span>, <span style="background-color: #fff0f0">&quot;gyr_z&quot;</span>, <span style="background-color: #fff0f0">&quot;mag_x&quot;</span>, <span style="background-color: #fff0f0">&quot;mag_y&quot;</span>, <span style="background-color: #fff0f0">&quot;mag_z&quot;</span>, <span style="background-color: #fff0f0">&quot;temp&quot;</span>
-        ]
-        sensor_data <span style="color: #333333">=</span> pd<span style="color: #333333">.</span>DataFrame(rc<span style="color: #333333">.</span>sensor_arr, columns<span style="color: #333333">=</span>cols)
-
-        <span style="color: #888888"># We only really care about the front ToF data though:</span>
-        sensor_ranges <span style="color: #333333">=</span> (np<span style="color: #333333">.</span>flip(sensor_data[<span style="background-color: #fff0f0">&quot;dist_f&quot;</span>][:<span style="color: #0000DD; font-weight: bold">18</span>]<span style="color: #333333">.</span>to_numpy()))[np<span style="color: #333333">.</span>newaxis]<span style="color: #333333">.</span>T
-
-        <span style="color: #888888"># Convert millimeters to meters</span>
-        sensor_ranges <span style="color: #333333">/=</span> <span style="color: #0000DD; font-weight: bold">1000</span>
-
-        <span style="color: #008800; font-weight: bold">return</span> sensor_ranges, sensor_ranges  <span style="color: #888888"># We don&#39;t care about the second value</span>
-        </pre></div>
-
-
-        <h3>Localization:</h3>
-        <p>
-            This lab does not use the car's motors so odometry does not come into play. Therefore the prediction step is meaningless. I used exclusively the update step at each of four points to localize. This update step is identical to the one written in lab 11.
-            Below are plots for the Belief given by the update step for each point:
-        </p>
-        <h5>
-            The blue dots represent the belief and the green circle surrounds the location the car was placed.
-        </h5>
-        <h4>Point 1: (-3 ft, -2 ft, 0 deg)</h4>
-        <img width="500" src="lab content/lab 12 content/neg3neg2.png">
-
-        <h4>Point 2: (0 ft ,3 ft, 0 deg)</h4>
-        <img width="500" src="lab content/lab 12 content/03.png">
-
-        <h4>Point 3: (5 ft, -3 ft, 0 deg)</h4>
-        <img width="500" src="lab content/lab 12 content/5neg3.png">
-
-        <h4>Point 4: (5 ft, 3 ft, 0 deg)</h4>
-        <img width="500" src="lab content/lab 12 content/53.png">
-
-        <p>
-            Orientation is not displayed in these plots but in each case it was near the correct value of zero degrees.
+            This run has some problems with localization from the start, but manages to recover due to some informative update step observations near the center of the map. However, as the robot attempts to move to the third and fourth waypoints, localization falls
+            off again and it falls down a rabbit hole of inaccurate control. Still, it managed to successfully localize several times and navigate through at least two waypoints, so it was a partial success.
         </p>
 
         <h3>Conclusion:</h3>
         <p>
-            In general localization was imperfect but came somewhat close. The exception is point 4, in which case localization was on the dot. The inaccuracies are likely due to error in the 20 degree rotations between observations and sensor noise.
+            My implementation of this lab included modified successes in control and localization, with the robot showing definite promise in its navigation. However, it could have been much improved through better control systems and more fine-tuned localization.
         </p>
 
         <h3>Note:</h3>
