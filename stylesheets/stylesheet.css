@@ -80,17 +80,28 @@ a:hover {
     .page-header {
         padding: 5rem 6rem;
     }
+    .back{
+        margin: -3rem 0 0 -2.5rem
+    }
 }
 
 @media screen and (min-width: 42em) and (max-width: 64em) {
     .page-header {
         padding: 3rem 4rem;
     }
+    .back{
+        margin: -1rem 0 0 -1rem;
+    }
 }
 
 @media screen and (max-width: 42em) {
     .page-header {
         padding: 2rem 1rem;
+    }
+
+    .back{
+        margin: 0;
+        background-color: red;
     }
 }
 
@@ -357,6 +368,14 @@ a:hover {
 /* 
 MY CODE
 */
+
+.back{
+    background-color: #155799;
+    float: left;
+    border: solid 2px white;
+    border-radius: 1rem;
+    padding: 0.25rem 0.5rem;
+}
 
 video {
     width: 50%;
