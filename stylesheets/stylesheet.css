@@ -375,6 +375,12 @@ MY CODE
     border: solid 2px white;
     border-radius: 1rem;
     padding: 0.25rem 0.5rem;
+
+}
+
+.back a {
+    color: white;
+    text-decoration: none;
 }
 
 video {
